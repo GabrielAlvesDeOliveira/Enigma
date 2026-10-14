@@ -58,9 +58,11 @@ Enigma/
 │   │   ├── services/        regras de negócio (sala, cronômetro, progresso)
 │   │   │   └── algorithms/  algoritmos dos enigmas (cifra, sequência, grafo)
 │   │   ├── sockets/         comunicação em tempo real
+│   │   ├── Utils/           arquivos utilitarios   
 │   │   ├── app.js           monta o Express
 │   │   └── server.js        sobe o servidor
 │   ├── knexfile.js
+│   ├── tests/
 │   ├── .env.example
 │   └── package.json
 ├── frontend/                (React, a ser criado)
@@ -158,7 +160,7 @@ O conteúdo dos enigmas fica no código (`services/`). O banco guarda apenas o p
 - [x] Configuração do Knex e do PostgreSQL
 - [x] Migrations das 5 tabelas
 - [x] Seed do usuário admin
-- [ ] Autenticação (cadastro, login, middlewares)
+- [x] Autenticação (cadastro, login, middlewares)
 - [ ] Salas (criar, entrar, iniciar, cronômetro)
 - [ ] Enigmas e algoritmos
 - [ ] Histórico e painel do mestre (Socket.IO)
