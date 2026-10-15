@@ -163,7 +163,7 @@ O conteúdo dos enigmas fica no código (`services/`). O banco guarda apenas o p
 - [x] Autenticação (cadastro, login, middlewares)
 - [x] Salas (criar, entrar, iniciar, cronômetro)
 - [x] Enigmas e algoritmos
-- [X] Histórico e painel do mestre (Socket.IO)
-- [ ] Contrato da API em `docs/API.md`
-- [ ] Frontend em React
+- [x] Histórico e painel do mestre (Socket.IO)
+- [x] Contrato da API em `docs/API.md`
+- [x] Frontend em React
 - [ ] Deploy em hospedagem gratuita
