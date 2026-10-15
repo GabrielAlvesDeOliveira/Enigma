@@ -152,7 +152,7 @@ Na lista (`GET .../puzzles`), cada item tem `key`, `title`, `status`, `solvedBy`
 |---|---|---|
 | `cipher` | `statement`, `encryptedText` | Texto com a mensagem decifrada. Ignora maiúsculas, acentos e espaços extras |
 | `sequence` | `statement`, `terms` (lista de números) | O próximo número, como número ou texto numérico |
-| `maze` | `statement`, `start`, `end`, `edges` (pares de salas conectadas) | Lista com os nomes das salas do caminho, da entrada até a saída |
+| `maze` | `statement`, `layout`, `rows`, `cols`, `start`, `end` (veja abaixo) | Lista com as casas do caminho, de `start` até `end`, no formato `"linha,coluna"` |
 
 ### 3.4 Tentativa de resposta
 
@@ -378,7 +378,15 @@ Resposta 200 (sequência):
 }
 ```
 
-O labirinto devolve `start`, `end` e `edges`, como descrito na seção 3.3.
+O labirinto devolve a grade inteira:
+
+| Campo | Descrição |
+|---|---|
+| `layout` | Lista de textos, um por linha da grade. `#` é parede, `.` é corredor, `S` é o início e `E` é o fim |
+| `rows`, `cols` | Quantidade de linhas e de colunas da grade |
+| `start`, `end` | Casa de início e de fim, no formato `"linha,coluna"` (contando de 0) |
+
+O jogador anda de casa em casa, para cima, para baixo, para a esquerda ou para a direita, só por corredores e sem repetir casas. A resposta é a lista de casas do caminho completo, incluindo `start` e `end`, por exemplo `["1,1", "2,1", "3,1"]`. O servidor confere cada passo.
 
 Erros:
 

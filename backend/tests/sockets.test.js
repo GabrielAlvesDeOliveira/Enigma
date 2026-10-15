@@ -17,7 +17,7 @@ const User = await import("../src/models/User.js");
 const { signToken } = await import("../src/services/authService.js");
 
 const CIPHER = "chave dourada";
-const MAZE = ["entrada", "A", "C", "E", "saida"];
+const { solutionPath: MAZE } = await import("../src/services/puzzles/mazePuzzle.js");
 
 let httpServer, realtime, baseUrl;
 let masterA, masterB, tokenA, tokenB;

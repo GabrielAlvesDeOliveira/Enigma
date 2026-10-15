@@ -37,6 +37,9 @@ export function formatClock(iso) {
 
 // A resposta enviada pode ser texto, número ou a lista de salas do labirinto.
 export function formatAnswer(answer) {
-  if (Array.isArray(answer)) return answer.join(' > ')
-  return String(answer)
+  if (!Array.isArray(answer)) return String(answer)
+  if (answer.length <= 6) return answer.join(' > ')
+
+  // Caminho longo (labirinto em grade): mostra o começo, o fim e o total de casas.
+  return `${answer.slice(0, 3).join(' > ')} > ... > ${answer.slice(-2).join(' > ')} (${answer.length} casas)`
 }

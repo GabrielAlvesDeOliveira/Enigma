@@ -6,6 +6,7 @@ import {
   getPublicPuzzle,
   validateAnswer,
 } from "../src/services/puzzles/index.js";
+import { readLayout, solutionPath } from "../src/services/puzzles/mazePuzzle.js";
 
 test("existem 3 enigmas com a estrutura esperada", () => {
   assert.equal(PUZZLE_KEYS.length, 3);
@@ -61,17 +62,122 @@ test("sequência: rejeita respostas erradas ou de tipo errado", () => {
   assert.equal(validateAnswer("sequence", null), false);
 });
 
-test("labirinto: aceita caminhos válidos", () => {
-  assert.equal(validateAnswer("maze", ["entrada", "A", "C", "E", "saida"]), true);
-  assert.equal(validateAnswer("maze", ["entrada", "B", "C", "E", "saida"]), true);
+// ---------- Labirinto em grade ----------
+
+const START = solutionPath[0];
+const END = solutionPath[solutionPath.length - 1];
+const asCell = (id) => id.split(",").map(Number);
+const fromCell = (row, col) => `${row},${col}`;
+
+test("labirinto: a solução calculada pelo servidor é aceita", () => {
+  assert.ok(solutionPath.length > 10);
+  assert.equal(validateAnswer("maze", solutionPath), true);
 });
 
-test("labirinto: rejeita caminhos inválidos", () => {
-  // beco sem saída
-  assert.equal(validateAnswer("maze", ["entrada", "B", "D", "F", "G"]), false);
-  // salas sem conexão
-  assert.equal(validateAnswer("maze", ["entrada", "C", "E", "saida"]), false);
-  // formato errado
-  assert.equal(validateAnswer("maze", "entrada,A,C,E,saida"), false);
-  assert.equal(validateAnswer("maze", []), false);
+test("labirinto: caminho que não chega ao fim, ou não começa no início, é recusado", () => {
+  assert.equal(validateAnswer("maze", solutionPath.slice(0, -1)), false);
+  assert.equal(validateAnswer("maze", solutionPath.slice(1)), false);
+  assert.equal(validateAnswer("maze", [START]), false);
+  assert.equal(validateAnswer("maze", [END, START]), false);
+});
+
+test("labirinto: pular casas, andar na diagonal ou atravessar parede é recusado", () => {
+  // pula a casa do meio
+  assert.equal(validateAnswer("maze", [solutionPath[0], ...solutionPath.slice(2)]), false);
+
+  // diagonal: troca a 3ª casa por uma vizinha na diagonal da anterior
+  const [row, col] = asCell(solutionPath[1]);
+  assert.equal(validateAnswer("maze", [START, fromCell(row + 1, col + 1), ...solutionPath.slice(3)]), false);
+
+  // parede: a casa (0,0) é parede
+  assert.equal(validateAnswer("maze", [START, "0,1", ...solutionPath.slice(2)]), false);
+});
+
+test("labirinto: repetir casa é recusado, mesmo voltando ao caminho certo", () => {
+  const withLoop = [...solutionPath.slice(0, 3), solutionPath[1], ...solutionPath.slice(2)];
+  assert.equal(validateAnswer("maze", withLoop), false);
+});
+
+test("labirinto: casas fora da grade, formatos errados e nomes especiais são recusados", () => {
+  const invalid = [
+    [START, "99,99", END],
+    [START, "1,1", END],
+    ["1,1,1", END],
+    [START, 5, END],
+    [[START], [END]],
+    solutionPath.join(","),
+    "",
+    [],
+    null,
+    undefined,
+    {},
+    ["constructor", "__proto__"],
+    Array(500).fill(START),
+  ];
+
+  for (const answer of invalid) {
+    assert.equal(validateAnswer("maze", answer), false, JSON.stringify(answer)?.slice(0, 40));
+  }
+});
+
+test("labirinto: os dados públicos descrevem a grade e não revelam a solução", () => {
+  const data = getPublicPuzzle("maze");
+
+  assert.equal(data.rows, data.layout.length);
+  assert.equal(data.cols, data.layout[0].length);
+  assert.ok(data.layout.every((line) => typeof line === "string" && line.length === data.cols));
+  assert.equal(data.layout.join("").split("S").length - 1, 1);
+  assert.equal(data.layout.join("").split("E").length - 1, 1);
+  assert.equal(data.layout[asCell(data.start)[0]][asCell(data.start)[1]], "S");
+  assert.equal(data.layout[asCell(data.end)[0]][asCell(data.end)[1]], "E");
+  assert.equal("solution" in data, false);
+  assert.equal(JSON.stringify(data).includes(solutionPath.join(",")), false);
+});
+
+test("labirinto: editar o desenho de volta não afeta o servidor (cópia)", () => {
+  const data = getPublicPuzzle("maze");
+  data.layout[1] = "XXXXXXXXXXXXXXX";
+  assert.notEqual(getPublicPuzzle("maze").layout[1], "XXXXXXXXXXXXXXX");
+});
+
+test("labirinto: o desenho é conferido, com mensagens claras para quem for editar", () => {
+  const ok = ["#####", "#S.E#", "#####"];
+  assert.equal(readLayout(ok).start, "1,1");
+  assert.equal(readLayout(ok).end, "1,3");
+
+  assert.throws(() => readLayout([]), /vazio/);
+  assert.throws(() => readLayout("texto"), /vazio/);
+  assert.throws(() => readLayout(["#####", "#S.E", "#####"]), /linha 2.*tamanho diferente/);
+  assert.throws(() => readLayout(["#####", "#S.X#", "#####"]), /Caractere inválido "X"/);
+  assert.throws(() => readLayout(["#####", "#..E#", "#####"]), /não tem início/);
+  assert.throws(() => readLayout(["#####", "#S..#", "#####"]), /não tem fim/);
+  assert.throws(() => readLayout(["#####", "#SSE#", "#####"]), /mais de um início/);
+  assert.throws(() => readLayout(["#####", "#SEE#", "#####"]), /mais de um fim/);
+  assert.throws(() => readLayout(["#####", "#S#E#", "#####"]), /não tem caminho/);
+});
+
+test("labirinto: o grafo só liga casas livres vizinhas (sem paredes nem diagonais)", () => {
+  const { layout } = getPublicPuzzle("maze");
+  const { graph } = readLayout(layout);
+  const freeCount = layout.join("").replace(/#/g, "").length;
+
+  assert.equal(Object.keys(graph).length, freeCount); // toda casa livre existe, e nenhuma parede
+  assert.ok(freeCount > 20);
+
+  for (const [id, neighbors] of Object.entries(graph)) {
+    const [row, col] = asCell(id);
+    assert.notEqual(layout[row][col], "#", `parede no grafo: ${id}`);
+
+    for (const other of neighbors) {
+      const [r, c] = asCell(other);
+      assert.notEqual(layout[r][c], "#", `ligação com parede: ${id} -> ${other}`);
+      assert.equal(Math.abs(row - r) + Math.abs(col - c), 1, `ligação que não é vizinha: ${id} -> ${other}`);
+      assert.ok(graph[other].includes(id), `ligação sem volta: ${id} -> ${other}`);
+    }
+  }
+});
+
+test("labirinto: num corredor simples, só o caminho em linha reta vale", () => {
+  const maze = readLayout(["#####", "#S.E#", "#####"]);
+  assert.equal(Object.keys(maze.graph).length, 3);
 });

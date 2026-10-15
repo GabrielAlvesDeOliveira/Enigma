@@ -108,11 +108,49 @@ body {
   gap: 1rem;
 }
 
-.maze-nodes,
 .maze-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
+}
+
+/* Labirinto em grade: cada casa é um quadrado. Só o necessário para a grade
+   aparecer certa; as cores abaixo são apenas para o jogo ser jogável e podem
+   ser trocadas por quem cuida do visual. */
+.maze-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--maze-cols), 2rem);
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.maze-wall,
+.maze-cell {
+  width: 2rem;
+  height: 2rem;
+  box-sizing: border-box;
+}
+
+.maze-wall {
+  background: currentColor;
+}
+
+.maze-cell {
+  padding: 0;
+}
+
+.maze-cell[data-state='reachable'] {
+  background: #dde9ff;
+}
+
+.maze-cell[data-state='path'] {
+  background: #9dc2f5;
+}
+
+.maze-cell[data-state='current'] {
+  background: #3b82c4;
+  color: white;
 }
 
 /* ---------- Visão do mestre ---------- */

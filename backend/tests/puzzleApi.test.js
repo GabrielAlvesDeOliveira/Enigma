@@ -15,7 +15,8 @@ const { signToken } = await import("../src/services/authService.js");
 
 const CIPHER = "chave dourada";
 const SEQUENCE = 48;
-const MAZE = ["entrada", "A", "C", "E", "saida"];
+const { solutionPath: MAZE } = await import("../src/services/puzzles/mazePuzzle.js");
+const WRONG_MAZE = MAZE.slice(0, 5); // caminho válido até certo ponto, mas que não chega ao fim
 
 let server, baseUrl;
 let master, other, masterToken;
@@ -98,8 +99,12 @@ test("ver: jogador só recebe o conteúdo com a sala em andamento; o mestre vê 
 
   assert.equal(cipher.data.puzzle.encryptedText, "FKDYH GRXUDGD");
   assert.deepEqual(sequence.data.puzzle.terms, [3, 8, 15, 24, 35]);
-  assert.equal(maze.data.puzzle.start, "entrada");
-  assert.ok(maze.data.puzzle.edges.length > 0);
+  assert.equal(maze.data.puzzle.start, "1,1");
+  assert.equal(maze.data.puzzle.end, "9,13");
+  assert.equal(maze.data.puzzle.rows, maze.data.puzzle.layout.length);
+  assert.equal(maze.data.puzzle.cols, maze.data.puzzle.layout[0].length);
+  assert.ok(maze.data.puzzle.layout.every((row) => row.length === maze.data.puzzle.cols));
+  assert.equal(JSON.stringify(maze.data).includes(MAZE.join(",")), false); // a solução não vai junto
 
   for (const res of [cipher, sequence, maze]) {
     assert.equal(res.data.puzzle.status, "open");
@@ -155,13 +160,13 @@ test("responder: erro não resolve, mas a tentativa fica registrada (inclusive c
   assert.equal(wrong.data.correct, false);
   assert.equal(wrong.data.room.puzzles.find((p) => p.key === "sequence").status, "open");
 
-  await answer(id, "maze", players[0].token, ["entrada", "B", "D", "F", "G"]);
+  await answer(id, "maze", players[0].token, WRONG_MAZE);
   await answer(id, "cipher", players[0].token, 42);
 
   const attempts = await PuzzleAttempt.listForRoom(id);
   assert.equal(attempts.length, 3);
   assert.ok(attempts.every((a) => a.isCorrect === false));
-  assert.deepEqual(attempts[1].answer, ["entrada", "B", "D", "F", "G"]);
+  assert.deepEqual(attempts[1].answer, WRONG_MAZE);
   assert.equal(attempts[2].answer, 42);
 });
 
@@ -210,7 +215,7 @@ test("enigma resolvido fica bloqueado para todos, até para respostas erradas", 
   const id = await setupRoom();
   await answer(id, "maze", players[0].token, MAZE);
 
-  const retry = await answer(id, "maze", players[1].token, ["entrada", "B", "D", "F", "G"]);
+  const retry = await answer(id, "maze", players[1].token, WRONG_MAZE);
   assert.equal(retry.status, 409);
   assert.equal((await PuzzleAttempt.listForRoom(id)).length, 1);
 
