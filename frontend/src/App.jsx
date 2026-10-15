@@ -1,10 +1,12 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.jsx'
+import MasterLayout from './components/MasterLayout.jsx'
 import PlayerLayout from './components/PlayerLayout.jsx'
 import History from './pages/History.jsx'
 import JoinGame from './pages/JoinGame.jsx'
 import Login from './pages/Login.jsx'
 import MasterPanel from './pages/MasterPanel.jsx'
+import MasterRoom from './pages/MasterRoom.jsx'
 import Register from './pages/Register.jsx'
 import Room from './pages/Room.jsx'
 
@@ -79,7 +81,13 @@ export default function App() {
       </Route>
 
       <Route element={<ProtectedRoute role="admin" />}>
-        <Route path="/mestre" element={<MasterPanel />} />
+        {/* Páginas com o menu lateral */}
+        <Route element={<MasterLayout />}>
+          <Route path="/mestre" element={<MasterPanel />} />
+        </Route>
+
+        {/* A sala ocupa a tela toda, sem o menu */}
+        <Route path="/mestre/sala/:roomId" element={<MasterRoom />} />
       </Route>
 
       <Route path="*" element={<HomeRedirect />} />

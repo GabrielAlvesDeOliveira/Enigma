@@ -114,3 +114,30 @@ body {
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* ---------- Visão do mestre ---------- */
+
+/* Mesmo esquema da visão do jogador: menu à esquerda e a página ao lado. */
+.master-layout {
+  min-height: 100vh;
+  display: flex;
+}
+
+.master-content {
+  flex: 1;
+}
+
+/* Filtros da lista de sessões em linha, quebrando quando faltar espaço. */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+/* Cada tentativa em uma linha, com as informações lado a lado. */
+.attempt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}

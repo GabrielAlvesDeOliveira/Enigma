@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Countdown from '../components/Countdown.jsx'
 import FormError from '../components/FormError.jsx'
 import PuzzleModal from '../components/PuzzleModal.jsx'
 import PuzzleSquare from '../components/PuzzleSquare.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
+import usePuzzleTitles from '../hooks/usePuzzleTitles.js'
 import useRoom from '../hooks/useRoom.js'
-import { ApiError, puzzles, rooms } from '../services/api.js'
+import { ApiError, rooms } from '../services/api.js'
 
 // Mensagem de cada resultado possível quando a sala termina.
 const RESULT_MESSAGES = {
@@ -35,28 +36,10 @@ function RoomView({ roomId, onRetry }) {
   const navigate = useNavigate()
   const { room, error, loading, offline, serverOffset, applyRoom } = useRoom(roomId)
 
-  const [titles, setTitles] = useState({})
+  const titles = usePuzzleTitles(roomId)
   const [openKey, setOpenKey] = useState(null)
   const [leaving, setLeaving] = useState(false)
   const [leaveError, setLeaveError] = useState('')
-
-  // Os títulos dos enigmas não mudam durante a partida: busca uma vez.
-  useEffect(() => {
-    let active = true
-
-    puzzles
-      .list(roomId)
-      .then((result) => {
-        if (active) setTitles(Object.fromEntries(result.puzzles.map((p) => [p.key, p.title])))
-      })
-      .catch(() => {
-        // sem os títulos, os quadrados mostram a chave do enigma
-      })
-
-    return () => {
-      active = false
-    }
-  }, [roomId])
 
   async function handleLeave() {
     setLeaveError('')

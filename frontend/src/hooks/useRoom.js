@@ -19,11 +19,20 @@ const STALL_MS = 4000
 //   serverOffset  diferença, em ms, entre o relógio do servidor e o deste computador
 //   applyRoom     aplica um estado de sala recebido por outro caminho (resposta HTTP)
 //
+// Opção "onAttempt": função chamada a cada tentativa de resposta enviada na sala.
+// Só o mestre recebe esse aviso; para jogadores a função nunca é chamada.
+//
 // Cada mudança na sala chega com o estado COMPLETO, então basta substituir o anterior.
-export default function useRoom(roomId) {
+export default function useRoom(roomId, { onAttempt } = {}) {
   const [state, setState] = useState({ room: null, error: '', loading: true })
   const [offline, setOffline] = useState(false)
   const [serverOffset, setServerOffset] = useState(0)
+
+  // Guarda sempre a versão mais recente do ouvinte, sem reabrir a conexão quando ele muda.
+  const latestOnAttempt = useRef(onAttempt)
+  useEffect(() => {
+    latestOnAttempt.current = onAttempt
+  })
 
   // Relógio do servidor (serverNow) do estado mais novo já aplicado. Um estado que
   // chegar atrasado, mais antigo que o atual, é ignorado e nunca desfaz uma mudança.
@@ -88,6 +97,7 @@ export default function useRoom(roomId) {
       setOffline(true) // falha de rede: o socket.io tenta de novo sozinho
     })
     socket.on('room:updated', ({ room }) => applyRoom(room))
+    socket.on('attempt:new', ({ attempt }) => latestOnAttempt.current?.(attempt))
 
     return () => {
       active = false

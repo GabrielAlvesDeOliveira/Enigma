@@ -26,3 +26,17 @@ export function roomStatusLabel({ status, finishReason }) {
   if (finishReason === 'cancelled') return 'Cancelada'
   return 'Encerrada'
 }
+
+// "2026-10-15T22:09:41.000Z" -> "19:09:41" (no fuso do navegador)
+export function formatClock(iso) {
+  if (!iso) return '-'
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '-'
+  return date.toLocaleTimeString('pt-BR')
+}
+
+// A resposta enviada pode ser texto, número ou a lista de salas do labirinto.
+export function formatAnswer(answer) {
+  if (Array.isArray(answer)) return answer.join(' > ')
+  return String(answer)
+}
