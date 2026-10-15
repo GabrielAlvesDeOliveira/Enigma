@@ -252,4 +252,4 @@ test("sair: só enquanto a sala aguarda e só quem é membro", async () => {
   await call("POST", "/api/rooms/join", players[0].token, { code });
   await call("POST", `/api/rooms/${id}/start`, tokenA);
   assert.equal((await call("POST", `/api/rooms/${id}/leave`, players[0].token)).status, 409);
-}); 
+});

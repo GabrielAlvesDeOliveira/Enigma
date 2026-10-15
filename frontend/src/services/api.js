@@ -57,6 +57,12 @@ export function setUnauthorizedHandler(handler) {
   unauthorizedHandler = handler
 }
 
+// Avisa que a sessão não vale mais, para quem descobriu isso por outro caminho
+// que não uma requisição HTTP (por exemplo, o tempo real recusou o token).
+export function notifyUnauthorized() {
+  if (unauthorizedHandler) unauthorizedHandler()
+}
+
 // ---------- Requisições ----------
 
 // Monta "?page=1&status=finished", ignorando valores vazios.

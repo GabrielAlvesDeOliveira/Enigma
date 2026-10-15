@@ -1,27 +1,56 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import Countdown from '../components/Countdown.jsx'
 import FormError from '../components/FormError.jsx'
-import { ApiError, rooms } from '../services/api.js'
-import { roomStatusLabel } from '../utils/format.js'
+import PuzzleModal from '../components/PuzzleModal.jsx'
+import PuzzleSquare from '../components/PuzzleSquare.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
+import useRoom from '../hooks/useRoom.js'
+import { ApiError, puzzles, rooms } from '../services/api.js'
 
-// PÁGINA PROVISÓRIA. Mostra o estado da sala lido uma vez pela API, só para o
-// fluxo de entrada não terminar no vazio. A tela de verdade (tempo real,
-// cronômetro e enigmas) vem na próxima etapa e substitui este arquivo.
+// Mensagem de cada resultado possível quando a sala termina.
+const RESULT_MESSAGES = {
+  completed: 'Parabéns! Vocês resolveram os 3 enigmas.',
+  timeout: 'O tempo acabou.',
+  cancelled: 'O mestre cancelou a sala.',
+}
+
+// A "key" faz o estado recomeçar do zero se a pessoa passar de uma sala para outra
+// (e também quando ela pede para tentar de novo).
 export default function Room() {
   const { roomId } = useParams()
-  const [state, setState] = useState({ loading: true, error: '', room: null })
+  const [attempt, setAttempt] = useState(0)
 
+  return (
+    <RoomView
+      key={`${roomId}-${attempt}`}
+      roomId={roomId}
+      onRetry={() => setAttempt((count) => count + 1)}
+    />
+  )
+}
+
+function RoomView({ roomId, onRetry }) {
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const { room, error, loading, offline, serverOffset, applyRoom } = useRoom(roomId)
+
+  const [titles, setTitles] = useState({})
+  const [openKey, setOpenKey] = useState(null)
+  const [leaving, setLeaving] = useState(false)
+  const [leaveError, setLeaveError] = useState('')
+
+  // Os títulos dos enigmas não mudam durante a partida: busca uma vez.
   useEffect(() => {
     let active = true
 
-    rooms
-      .get(roomId)
-      .then(({ room }) => {
-        if (active) setState({ loading: false, error: '', room })
+    puzzles
+      .list(roomId)
+      .then((result) => {
+        if (active) setTitles(Object.fromEntries(result.puzzles.map((p) => [p.key, p.title])))
       })
-      .catch((err) => {
-        const message = err instanceof ApiError ? err.message : 'Não foi possível carregar a sala.'
-        if (active) setState({ loading: false, error: message, room: null })
+      .catch(() => {
+        // sem os títulos, os quadrados mostram a chave do enigma
       })
 
     return () => {
@@ -29,39 +58,138 @@ export default function Room() {
     }
   }, [roomId])
 
-  const { loading, error, room } = state
+  async function handleLeave() {
+    setLeaveError('')
+    setLeaving(true)
+
+    try {
+      await rooms.leave(roomId)
+      navigate('/jogo')
+    } catch (err) {
+      setLeaveError(err instanceof ApiError ? err.message : 'Não foi possível sair da sala.')
+      setLeaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="room-page">
+        <p className="room-status">Carregando sala...</p>
+
+        {/* Se a conexão estiver demorando ou falhando, explica e dá uma saída. */}
+        {offline && (
+          <>
+            <p className="room-slow" role="status">
+              Está demorando mais do que o normal para conectar ao servidor. Verifique se ele está
+              rodando e se a sua conexão está boa. Continuamos tentando.
+            </p>
+            <button className="room-retry" type="button" onClick={onRetry}>
+              Tentar de novo
+            </button>
+            <Link className="room-back" to="/jogo">
+              Voltar
+            </Link>
+          </>
+        )}
+      </main>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="room-page">
+        <FormError message={error} />
+        <Link className="room-back" to="/jogo">
+          Voltar
+        </Link>
+      </main>
+    )
+  }
+
+  const playerName = (id) => room.players.find((player) => player.id === id)?.name ?? 'outro jogador'
+  const waiting = room.status === 'waiting'
+  const inProgress = room.status === 'in_progress'
+  const finished = room.status === 'finished'
+
+  const openPuzzle = room.puzzles.find((puzzle) => puzzle.key === openKey)
 
   return (
     <main className="room-page">
-      {loading && <p className="room-status">Carregando sala...</p>}
+      <header className="room-header">
+        <h1 className="room-title">Sala {room.code}</h1>
+        {offline && (
+          <p className="room-connection" role="status">
+            Reconectando...
+          </p>
+        )}
+      </header>
 
-      <FormError message={error} />
+      {waiting && <p className="room-waiting">Aguardando o mestre iniciar.</p>}
 
-      {room && (
+      {inProgress && <Countdown endsAt={room.endsAt} offset={serverOffset} />}
+
+      {finished && (
+        <p className="room-result" role="status">
+          {RESULT_MESSAGES[room.finishReason] ?? 'A sala foi encerrada.'}
+        </p>
+      )}
+
+      {/* Os quadrados só aparecem com a sala em andamento ou encerrada (aí, só para leitura). */}
+      {!waiting && (
+        <div className="puzzle-grid">
+          {room.puzzles.map((puzzle) => (
+            <PuzzleSquare
+              key={puzzle.key}
+              title={titles[puzzle.key] ?? puzzle.key}
+              status={puzzle.status}
+              solverName={playerName(puzzle.solvedBy)}
+              readOnly={!inProgress}
+              onOpen={() => setOpenKey(puzzle.key)}
+            />
+          ))}
+        </div>
+      )}
+
+      <section className="room-players-section">
+        <h2 className="room-players-title">Jogadores</h2>
+        <ul className="room-players">
+          {room.players.map((player) => (
+            <li className="room-player" key={player.id}>
+              {player.name}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {waiting && (
         <>
-          <h1 className="room-title">Sala {room.code}</h1>
-          <p className="room-note">Esta tela é provisória: o tempo real e os enigmas chegam na próxima etapa.</p>
-
-          <dl className="room-details">
-            <div className="room-detail">
-              <dt>Situação</dt>
-              <dd>{roomStatusLabel(room)}</dd>
-            </div>
-            <div className="room-detail">
-              <dt>Mestre</dt>
-              <dd>{room.master.name}</dd>
-            </div>
-            <div className="room-detail">
-              <dt>Jogadores</dt>
-              <dd>{room.players.map((player) => player.name).join(', ') || 'Ninguém ainda'}</dd>
-            </div>
-          </dl>
+          <FormError message={leaveError} />
+          <button className="room-leave" type="button" disabled={leaving} onClick={handleLeave}>
+            {leaving ? 'Saindo...' : 'Sair da sala'}
+          </button>
         </>
       )}
 
-      <Link className="room-back" to="/jogo">
-        Voltar
-      </Link>
+      {finished && (
+        <Link className="room-back" to="/jogo">
+          Voltar
+        </Link>
+      )}
+
+      {openPuzzle && (
+        <PuzzleModal
+          key={openPuzzle.key}
+          roomId={roomId}
+          puzzleKey={openPuzzle.key}
+          title={titles[openPuzzle.key] ?? openPuzzle.key}
+          puzzleState={openPuzzle}
+          solverName={playerName(openPuzzle.solvedBy)}
+          roomActive={inProgress}
+          currentUserId={user.id}
+          onRoomUpdate={applyRoom}
+          onClose={() => setOpenKey(null)}
+        />
+      )}
     </main>
   )
 }

@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
 
+// Cria o primeiro usuário mestre (admin).
+// As credenciais vêm do .env para não ficarem escritas no repositório.
 export async function seed(knex) {
   const { ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
 
