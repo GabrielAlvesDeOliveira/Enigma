@@ -54,6 +54,18 @@ test("cadastro: cria jogador, normaliza e-mail e não vaza a senha", async () =>
   assert.equal(JSON.stringify(data).includes("senha1234"), false);
 });
 
+test("cadastro: createdAt vem em ISO 8601 UTC, igual às outras datas da API", async () => {
+  const res = await post("/api/auth/register", {
+    name: "Carla",
+    email: "carla@exemplo.com",
+    password: "senha1234",
+  });
+  const { user } = await res.json();
+
+  assert.match(user.createdAt, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+  assert.ok(Math.abs(Date.now() - Date.parse(user.createdAt)) < 60_000);
+});
+
 test("cadastro: e-mail repetido (mesmo com outra caixa) dá 409", async () => {
   const res = await post("/api/auth/register", { ...validUser, email: "MARIA@exemplo.com" });
   assert.equal(res.status, 409);

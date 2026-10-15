@@ -1,4 +1,5 @@
 import db from "../config/db.js";
+import { toMillis } from "../utils/time.js";
 
 // Dados do usuário que podem sair da API (nunca inclui o hash da senha).
 export function toPublicUser(row) {
@@ -8,7 +9,7 @@ export function toPublicUser(row) {
     name: row.name,
     email: row.email,
     role: row.role,
-    createdAt: row.created_at,
+    createdAt: row.created_at == null ? null : new Date(toMillis(row.created_at)).toISOString(),
   };
 }
 
