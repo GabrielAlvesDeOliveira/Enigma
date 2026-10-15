@@ -1,19 +1,15 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuth } from './context/AuthContext.jsx'
+import PlayerLayout from './components/PlayerLayout.jsx'
+import History from './pages/History.jsx'
+import JoinGame from './pages/JoinGame.jsx'
 import Login from './pages/Login.jsx'
+import MasterPanel from './pages/MasterPanel.jsx'
 import Register from './pages/Register.jsx'
+import Room from './pages/Room.jsx'
 
 // Página inicial de cada tipo de usuário.
 const homeFor = (user) => (user.role === 'admin' ? '/mestre' : '/jogo')
-
-// Provisório: ocupa o lugar das páginas até elas serem criadas (pasta pages).
-function Placeholder({ name }) {
-  return (
-    <main className="placeholder">
-      <p>Página: {name}</p>
-    </main>
-  )
-}
 
 function Loading() {
   return <p className="app-loading">Carregando...</p>
@@ -22,11 +18,14 @@ function Loading() {
 // Só deixa passar quem está logado. Com "role", só aquele tipo de usuário:
 // o outro tipo é levado para a própria página inicial.
 function ProtectedRoute({ role }) {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, loggedOut } = useAuth()
   const location = useLocation()
 
   if (isLoading) return <Loading />
-  if (!user) return <Navigate to="/login" replace state={{ from: location }} />
+
+  // Guarda a página pedida para voltar a ela depois do login, exceto quando a
+  // pessoa acabou de clicar em sair (aí o login começa limpo).
+  if (!user) return <Navigate to="/login" replace state={loggedOut ? undefined : { from: location }} />
   if (role && user.role !== role) return <Navigate to={homeFor(user)} replace />
 
   return <Outlet />
@@ -69,14 +68,18 @@ export default function App() {
       </Route>
 
       <Route element={<ProtectedRoute role="player" />}>
-        {/* Depois: um layout com o menu lateral envolvendo "/jogo" e "/historico". */}
-        <Route path="/jogo" element={<Placeholder name="Entrar no jogo" />} />
-        <Route path="/historico" element={<Placeholder name="Histórico" />} />
-        <Route path="/sala/:roomId" element={<Placeholder name="Sala" />} />
+        {/* Páginas com o menu lateral */}
+        <Route element={<PlayerLayout />}>
+          <Route path="/jogo" element={<JoinGame />} />
+          <Route path="/historico" element={<History />} />
+        </Route>
+
+        {/* A sala ocupa a tela toda, sem o menu */}
+        <Route path="/sala/:roomId" element={<Room />} />
       </Route>
 
       <Route element={<ProtectedRoute role="admin" />}>
-        <Route path="/mestre" element={<Placeholder name="Painel do mestre" />} />
+        <Route path="/mestre" element={<MasterPanel />} />
       </Route>
 
       <Route path="*" element={<HomeRedirect />} />
