@@ -110,3 +110,11 @@ export async function expireOverdue(nowMs) {
       updated_at: db.fn.now(),
     });
 }
+
+// Salas em andamento cujo tempo já acabou (usado pelo encerramento automático).
+export async function findOverdue(nowMs) {
+  const rows = await db("rooms")
+    .where({ status: "in_progress" })
+    .where("ends_at", "<=", new Date(nowMs));
+  return rows.map(toRoom);
+}

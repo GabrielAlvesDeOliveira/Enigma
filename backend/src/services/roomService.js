@@ -15,6 +15,7 @@ import {
 import { generateRoomCode, normalizeRoomCode } from "../utils/roomCode.js";
 import { isUniqueViolation } from "../utils/dbErrors.js";
 import { AppError } from "../utils/AppError.js";
+import { publishRoomChange } from "../events/roomEvents.js";
 
 const MAX_CODE_ATTEMPTS = 5;
 
@@ -37,11 +38,13 @@ function remainingFor(room, now) {
 async function applyTimeout(room, now) {
   if (!shouldTimeout(room, now)) return room;
 
-  await Room.transition(room.id, ["in_progress"], {
+  const changed = await Room.transition(room.id, ["in_progress"], {
     status: "finished",
     finishReason: "timeout",
     finishedAtMs: room.endsAtMs,
   });
+
+  if (changed > 0) publishRoomChange(room.id, "timeout");
 
   return Room.findById(room.id);
 }
@@ -112,7 +115,7 @@ export async function joinRoom(user, rawCode, now = Date.now()) {
   const code = normalizeRoomCode(rawCode);
   if (!code) throw new AppError(400, "Código inválido.");
 
-  const roomId = await db.transaction(async (trx) => {
+  const { roomId, added } = await db.transaction(async (trx) => {
     const room = await Room.findByCode(code, { trx, forUpdate: true });
     if (!room) throw notFound();
 
@@ -122,8 +125,10 @@ export async function joinRoom(user, rawCode, now = Date.now()) {
     assertAllowed(joinDecision({ status: room.status, playerCount, isMember }));
 
     if (!isMember) await RoomPlayer.add(room.id, user.id, trx);
-    return room.id;
+    return { roomId: room.id, added: !isMember };
   });
+
+  if (added) publishRoomChange(roomId, "player_joined", { userId: user.id });
 
   return getRoomState(roomId, user, now);
 }
@@ -168,6 +173,8 @@ export async function startRoom(roomId, adminId, now = Date.now()) {
     }, trx);
   });
 
+  publishRoomChange(roomId, "started");
+
   return getRoomState(roomId, { id: adminId, role: "admin" }, now);
 }
 
@@ -187,7 +194,7 @@ export async function cancelRoom(roomId, adminId, now = Date.now()) {
         finishReason: "timeout",
         finishedAtMs: room.endsAtMs,
       }, trx);
-      return "already_finished";
+      return "timed_out";
     }
 
     if (room.status === "finished") return "already_finished";
@@ -201,9 +208,13 @@ export async function cancelRoom(roomId, adminId, now = Date.now()) {
   });
 
   // O erro é lançado só depois da transação, para a mudança por tempo esgotado ser salva.
-  if (outcome === "already_finished") {
+  if (outcome === "timed_out") publishRoomChange(roomId, "timeout");
+
+  if (outcome !== "cancelled") {
     throw new AppError(409, "Esta sala já foi encerrada.");
   }
+
+  publishRoomChange(roomId, "cancelled");
 
   return getRoomState(roomId, { id: adminId, role: "admin" }, now);
 }
@@ -220,6 +231,8 @@ export async function leaveRoom(roomId, user) {
 
     await RoomPlayer.remove(room.id, user.id, trx);
   });
+
+  publishRoomChange(roomId, "player_left", { userId: user.id });
 
   return { left: true };
 }

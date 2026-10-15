@@ -8,6 +8,18 @@ import { AppError } from "../utils/AppError.js";
 
 const toIso = (ms) => (ms == null ? null : new Date(ms).toISOString());
 
+// Formato de uma tentativa na API e nos eventos em tempo real.
+export function toAttemptView(a) {
+  return {
+    id: a.id,
+    puzzleKey: a.puzzleKey,
+    user: { id: a.userId, name: a.userName },
+    answer: a.answer,
+    isCorrect: a.isCorrect,
+    createdAt: toIso(a.createdAtMs),
+  };
+}
+
 // Uma página de salas com o resumo de cada uma (sem uma consulta por sala).
 async function listPage(filters) {
   const { page, pageSize } = filters;
@@ -90,13 +102,6 @@ export async function getAdminRoomDetail(roomId, user, now = Date.now()) {
   return {
     room,
     summary,
-    attempts: attempts.map((a) => ({
-      id: a.id,
-      puzzleKey: a.puzzleKey,
-      user: { id: a.userId, name: a.userName },
-      answer: a.answer,
-      isCorrect: a.isCorrect,
-      createdAt: toIso(a.createdAtMs),
-    })),
+    attempts: attempts.map(toAttemptView),
   };
 }

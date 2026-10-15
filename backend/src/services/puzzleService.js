@@ -8,6 +8,7 @@ import { loadAccessibleRoom, getRoomState } from "./roomService.js";
 import { answerDecision, shouldTimeout } from "./roomRules.js";
 import { toJsonColumn } from "../utils/dbTypes.js";
 import { AppError } from "../utils/AppError.js";
+import { publishRoomChange, publishAttempt } from "../events/roomEvents.js";
 
 const MAX_ANSWER_LENGTH = 2000;
 
@@ -93,16 +94,19 @@ export async function submitAnswer(roomId, key, user, answer, now = Date.now()) 
     }
 
     const correct = validateAnswer(key, answer);
-    await PuzzleAttempt.create(
+    const attemptId = await PuzzleAttempt.create(
       { roomId: room.id, puzzleKey: key, userId: user.id, answer, isCorrect: correct },
       trx
     );
+
+    let completed = false;
 
     if (correct) {
       const won = await RoomProgress.markSolved(room.id, key, user.id, now, trx);
       if (won === 0) throw new AppError(409, "Este enigma já foi resolvido.");
 
       if ((await RoomProgress.countOpen(room.id, trx)) === 0) {
+        completed = true;
         await Room.transition(room.id, ["in_progress"], {
           status: "finished",
           finishReason: "completed",
@@ -111,10 +115,19 @@ export async function submitAnswer(roomId, key, user, answer, now = Date.now()) 
       }
     }
 
-    return { correct };
+    return { correct, attemptId, completed };
   });
 
-  if (outcome.rejected) throw outcome.rejected;
+  if (outcome.rejected) {
+    publishRoomChange(roomId, "timeout");
+    throw outcome.rejected;
+  }
+
+  // Avisos em tempo real, só depois que tudo foi salvo.
+  publishAttempt(roomId, outcome.attemptId);
+  if (outcome.correct) {
+    publishRoomChange(roomId, outcome.completed ? "completed" : "puzzle_solved");
+  }
 
   return { correct: outcome.correct, room: await getRoomState(roomId, user, now) };
 }

@@ -23,9 +23,13 @@
     "jsonwebtoken": "^9.0.3",
     "knex": "^3.3.0",
     "pg": "^8.23.1",
+    "socket.io": "^4.8.4",
     "sqlite3": "^6.0.1"
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.4"
   }
 }
