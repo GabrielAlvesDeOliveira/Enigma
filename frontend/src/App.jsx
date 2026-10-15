@@ -1,122 +1,85 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
+import { useAuth } from './context/AuthContext.jsx'
+import Login from './pages/Login.jsx'
+import Register from './pages/Register.jsx'
 
-function App() {
-  const [count, setCount] = useState(0)
+// Página inicial de cada tipo de usuário.
+const homeFor = (user) => (user.role === 'admin' ? '/mestre' : '/jogo')
 
+// Provisório: ocupa o lugar das páginas até elas serem criadas (pasta pages).
+function Placeholder({ name }) {
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <main className="placeholder">
+      <p>Página: {name}</p>
+    </main>
   )
 }
 
-export default App
+function Loading() {
+  return <p className="app-loading">Carregando...</p>
+}
+
+// Só deixa passar quem está logado. Com "role", só aquele tipo de usuário:
+// o outro tipo é levado para a própria página inicial.
+function ProtectedRoute({ role }) {
+  const { user, isLoading } = useAuth()
+  const location = useLocation()
+
+  if (isLoading) return <Loading />
+  if (!user) return <Navigate to="/login" replace state={{ from: location }} />
+  if (role && user.role !== role) return <Navigate to={homeFor(user)} replace />
+
+  return <Outlet />
+}
+
+// Login e cadastro: quem já está logado é levado para dentro, de volta à página
+// que tentou abrir antes de entrar (se houver) ou para a sua página inicial.
+function PublicOnlyRoute() {
+  const { user, isLoading } = useAuth()
+  const location = useLocation()
+
+  if (isLoading) return <Loading />
+
+  if (user) {
+    const from = location.state?.from
+    const target = from ? `${from.pathname}${from.search ?? ''}` : homeFor(user)
+    return <Navigate to={target} replace />
+  }
+
+  return <Outlet />
+}
+
+// "/" e qualquer endereço desconhecido: manda cada um para o lugar certo.
+function HomeRedirect() {
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) return <Loading />
+
+  return <Navigate to={user ? homeFor(user) : '/login'} replace />
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomeRedirect />} />
+
+      <Route element={<PublicOnlyRoute />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/cadastro" element={<Register />} />
+      </Route>
+
+      <Route element={<ProtectedRoute role="player" />}>
+        {/* Depois: um layout com o menu lateral envolvendo "/jogo" e "/historico". */}
+        <Route path="/jogo" element={<Placeholder name="Entrar no jogo" />} />
+        <Route path="/historico" element={<Placeholder name="Histórico" />} />
+        <Route path="/sala/:roomId" element={<Placeholder name="Sala" />} />
+      </Route>
+
+      <Route element={<ProtectedRoute role="admin" />}>
+        <Route path="/mestre" element={<Placeholder name="Painel do mestre" />} />
+      </Route>
+
+      <Route path="*" element={<HomeRedirect />} />
+    </Routes>
+  )
+}

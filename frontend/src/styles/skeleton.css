@@ -1,0 +1,33 @@
+/*
+  CSS estrutural mínimo, só para o esqueleto das páginas ficar utilizável
+  (centralizar o card, empilhar os campos). Nada aqui define aparência.
+  Quem cuida do visual pode editar à vontade ou substituir este arquivo inteiro.
+*/
+
+body {
+  margin: 0;
+}
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 24rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
