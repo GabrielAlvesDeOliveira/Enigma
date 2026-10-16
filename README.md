@@ -7,10 +7,10 @@ Projeto de extensão da disciplina **Certificadora de Competências 2** (Engenha
 
 ## Equipe
 
-- Gabriel
-- Maria Júlia
-- José
-- João
+- Gabriel Alves de Oliveira
+- Maria Júlia Pedroso de Oliveira Souza
+- José Lucas Nobrega Trautwein
+- João Guilherme Nobrega Trautwein
 
 ## Como funciona
 
