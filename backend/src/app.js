@@ -11,15 +11,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get("/teste", (req, res) => res.json({ status: "ok" }));
 
 app.use("/api/auth", authRoutes);
-// As rotas de enigmas vêm antes por serem mais específicas.
 app.use("/api/rooms/:id/puzzles", puzzleRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/admin", adminRoutes);
 
-// Sempre por último: rota inexistente e tratamento de erros.
 app.use(notFound);
 app.use(errorHandler);
 

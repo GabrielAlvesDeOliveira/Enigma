@@ -1,7 +1,6 @@
 import db from "../config/db.js";
 import { toMillis } from "../utils/time.js";
 
-// Dados do usuário que podem sair da API (nunca inclui o hash da senha).
 export function toPublicUser(row) {
   if (!row) return null;
   return {
@@ -26,7 +25,6 @@ export async function create({ name, email, passwordHash, role = "player" }) {
     .insert({ name, email, password_hash: passwordHash, role })
     .returning("id");
 
-  // SQLite devolve o id direto, PostgreSQL devolve um objeto { id }.
   const id = typeof row === "object" ? row.id : row;
   return findById(id);
 }

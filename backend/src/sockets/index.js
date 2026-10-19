@@ -7,7 +7,6 @@ import { roomEvents, ROOM_CHANGED, ATTEMPT_CREATED } from "../events/roomEvents.
 import { AppError } from "../utils/AppError.js";
 import { parseId } from "../utils/parseId.js";
 
-// Usuário "do sistema" para ler o estado da sala na hora de transmitir.
 const SYSTEM_USER = { id: 0, role: "admin" };
 const MAX_SUBSCRIPTIONS = 10;
 
@@ -23,22 +22,14 @@ function toAckError(err) {
   return { ok: false, status: 500, error: "Erro interno do servidor." };
 }
 
-// Liga o Socket.IO ao servidor HTTP.
-//
-// Fluxo do cliente:
-//   const socket = io(URL, { auth: { token } });
-//   socket.emit("room:subscribe", { roomId }, (res) => ...);   // res.room = estado atual
-//   socket.on("room:updated", ({ type, room }) => ...);        // todos da sala
-//   socket.on("attempt:new", ({ attempt }) => ...);            // só o mestre
 export function attachSockets(httpServer, { corsOrigin = process.env.CORS_ORIGIN } = {}) {
   const origin = corsOrigin ? corsOrigin.split(",").map((item) => item.trim()) : "*";
 
   const io = new Server(httpServer, {
     cors: { origin },
-    maxHttpBufferSize: 1e4, // mensagens pequenas bastam
+    maxHttpBufferSize: 1e4, 
   });
 
-  // Só conecta quem tem um token válido.
   io.use((socket, next) => {
     try {
       socket.data.user = verifyToken(socket.handshake.auth?.token);
@@ -49,7 +40,6 @@ export function attachSockets(httpServer, { corsOrigin = process.env.CORS_ORIGIN
   });
 
   io.on("connection", (socket) => {
-    // Inscrição em uma sala: jogadores só nas salas em que estão; mestres em qualquer uma.
     socket.on("room:subscribe", async (payload, ack) => {
       const reply = typeof ack === "function" ? ack : () => {};
 
@@ -60,8 +50,6 @@ export function attachSockets(httpServer, { corsOrigin = process.env.CORS_ORIGIN
           throw new AppError(429, "Inscrições demais em salas ao mesmo tempo.");
         }
 
-        // 1) confere o acesso, 2) entra no canal, 3) lê o estado.
-        // Nessa ordem, nenhuma mudança se perde entre a leitura e a inscrição.
         await loadAccessibleRoom(roomId, socket.data.user);
         socket.join(roomChannel(roomId));
         if (socket.data.user.role === "admin") socket.join(masterChannel(roomId));
@@ -86,10 +74,8 @@ export function attachSockets(httpServer, { corsOrigin = process.env.CORS_ORIGIN
     });
   });
 
-  // A sala mudou: manda o estado novo para todos os inscritos.
   const onRoomChanged = async ({ roomId, type, userId }) => {
     try {
-      // Quem saiu da sala deixa de receber atualizações dela.
       if (type === "player_left" && userId != null) {
         const sockets = await io.in(roomChannel(roomId)).fetchSockets();
         for (const s of sockets) {
@@ -106,7 +92,6 @@ export function attachSockets(httpServer, { corsOrigin = process.env.CORS_ORIGIN
     }
   };
 
-  // Nova tentativa de resposta: só o mestre recebe (as respostas dos outros não são públicas).
   const onAttemptCreated = async ({ roomId, attemptId }) => {
     try {
       const attempt = await PuzzleAttempt.findById(attemptId);

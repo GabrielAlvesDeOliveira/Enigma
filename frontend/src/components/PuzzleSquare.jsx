@@ -1,6 +1,3 @@
-// Um dos 3 quadrados da sala (um por enigma).
-// Aberto: clicável. Resolvido: desativado para todos, mostrando quem resolveu.
-// "readOnly" é para a sala fora de andamento (aguardando ou encerrada).
 export default function PuzzleSquare({ title, status, solverName, readOnly, onOpen }) {
   const solved = status === 'solved'
 

@@ -1,16 +1,5 @@
 import { bfsShortestPath, buildGraph, isValidPath } from "../algorithms/graph.js";
 
-// CONTEÚDO DE EXEMPLO: a equipe pode redesenhar o labirinto.
-//
-// O labirinto é uma grade de texto. Cada caractere é uma casa:
-//   #   parede
-//   .   corredor (casa livre)
-//   S   início (exatamente um)
-//   E   fim (exatamente um)
-// O jogador anda de casa em casa (para cima, para baixo, para a esquerda ou para a
-// direita), só por casas livres, sem passar duas vezes pela mesma casa.
-// Todas as linhas devem ter o mesmo tamanho, e precisa existir um caminho do S até o E.
-// O servidor confere isso ao iniciar e avisa com um erro claro se o desenho estiver errado.
 const LAYOUT = [
   "###############",
   "#S#.....#.....#",
@@ -27,10 +16,8 @@ const LAYOUT = [
 
 const FREE_CELLS = new Set([".", "S", "E"]);
 
-// Cada casa é identificada por "linha,coluna" (contando de 0). Ex.: "1,1".
 const cellId = (row, col) => `${row},${col}`;
 
-// Lê o desenho, confere se está correto e devolve o que o servidor precisa.
 export function readLayout(layout) {
   if (!Array.isArray(layout) || layout.length === 0) {
     throw new Error("O desenho do labirinto está vazio.");
@@ -64,7 +51,6 @@ export function readLayout(layout) {
         end = cellId(row, col);
       }
 
-      // Liga cada casa livre às vizinhas livres da direita e de baixo.
       if (col + 1 < cols && FREE_CELLS.has(layout[row][col + 1])) {
         edges.push([cellId(row, col), cellId(row, col + 1)]);
       }
@@ -88,14 +74,11 @@ export function readLayout(layout) {
 
 const maze = readLayout(LAYOUT);
 
-// O menor caminho do início ao fim, calculado com busca em largura (BFS).
-// Só para testes e documentação: nunca é enviado ao jogador.
 export const solutionPath = bfsShortestPath(maze.graph, maze.start, maze.end);
 
 export default {
   key: "maze",
 
-  // Dados enviados ao frontend. O desenho é público; a solução não.
   getPublicData() {
     return {
       key: "maze",
@@ -110,8 +93,6 @@ export default {
     };
   },
 
-  // A resposta é a lista de casas do caminho, de "start" até "end", por exemplo
-  // ["1,1", "2,1", "3,1", ...]. O servidor confere cada passo no grafo.
   validate(answer) {
     return isValidPath(maze.graph, answer, maze.start, maze.end);
   },

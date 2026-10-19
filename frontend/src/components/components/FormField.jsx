@@ -1,9 +1,5 @@
 import { useId } from 'react'
 
-// Campo de formulário: rótulo + campo + dica opcional.
-// "onChange" recebe o texto digitado (não o evento), então nas páginas basta
-// usar onChange={setEmail}. Qualquer outro atributo do <input> (required,
-// minLength, autoComplete...) é repassado.
 export default function FormField({ label, name, type = 'text', value, onChange, hint, ...inputProps }) {
   const id = useId()
   const hintId = `${id}-hint`

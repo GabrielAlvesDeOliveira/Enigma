@@ -29,7 +29,6 @@ function oneOf(query, name, allowed) {
   return value;
 }
 
-// Aceita apenas datas reais no formato AAAA-MM-DD (dia em UTC).
 function day(query, name) {
   const value = text(query, name);
   if (value === undefined) return null;
@@ -41,8 +40,6 @@ function day(query, name) {
   return date.getTime();
 }
 
-// Lê e valida os parâmetros da URL das listagens (?page=1&status=finished ...).
-// O dia final ("to") entra inteiro: devolvemos o início do dia seguinte como limite exclusivo.
 export function parseHistoryFilters(query = {}) {
   const guided = oneOf(query, "guided", ["true", "false"]);
   const fromMs = day(query, "from");

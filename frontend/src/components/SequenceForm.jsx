@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import FormField from './FormField.jsx'
 
-// Enigma da sequência: mostra os números e recebe o próximo (número).
 export default function SequenceForm({ puzzle, submitting, onSubmit }) {
   const [text, setText] = useState('')
 

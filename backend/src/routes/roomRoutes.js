@@ -7,12 +7,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = Router();
 
-// Todas as rotas de sala exigem login.
 router.use(authenticate);
 
 router.post("/", requireAdmin, asyncHandler(roomController.create));
 router.post("/join", asyncHandler(roomController.join));
-// Histórico do jogador. Precisa vir antes de "/:id".
 router.get("/mine", asyncHandler(historyController.mine));
 router.get("/:id", asyncHandler(roomController.show));
 router.post("/:id/start", requireAdmin, asyncHandler(roomController.start));

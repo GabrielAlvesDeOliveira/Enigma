@@ -1,7 +1,4 @@
 import bcrypt from "bcryptjs";
-
-// Cria o primeiro usuário mestre (admin).
-// As credenciais vêm do .env para não ficarem escritas no repositório.
 export async function seed(knex) {
   const { ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD } = process.env;
 
@@ -13,7 +10,6 @@ export async function seed(knex) {
 
   const email = ADMIN_EMAIL.trim().toLowerCase();
 
-  // Seed idempotente: se o admin já existe, não faz nada.
   const existing = await knex("users").where({ email }).first();
   if (existing) {
     console.log(`Admin ${email} já existe. Nada foi alterado.`);

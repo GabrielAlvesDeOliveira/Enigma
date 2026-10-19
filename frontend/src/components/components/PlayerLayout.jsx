@@ -1,9 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 
-// Estrutura da visão do jogador: menu lateral à esquerda (links no topo e
-// "Desconectar" no rodapé) e, ao lado, a página atual (Outlet).
-// O link da página aberta recebe automaticamente a classe "active".
 export default function PlayerLayout() {
   const { logout } = useAuth()
 

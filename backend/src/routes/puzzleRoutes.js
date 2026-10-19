@@ -3,7 +3,6 @@ import * as puzzleController from "../controllers/puzzleController.js";
 import { authenticate } from "../middlewares/authenticate.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
-// Montada em /api/rooms/:id/puzzles (mergeParams deixa o :id disponível aqui).
 const router = Router({ mergeParams: true });
 
 router.use(authenticate);

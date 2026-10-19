@@ -24,8 +24,6 @@ function progressOf(progress, key) {
   return progress.find((p) => p.key === key) ?? { key, status: "open", solvedBy: null, solvedAtMs: null };
 }
 
-// Lista os 3 enigmas da sala com o status de cada um. Mostra só o título,
-// então pode ser consultada mesmo enquanto a sala aguarda.
 export async function listPuzzles(roomId, user, now = Date.now()) {
   const room = await loadAccessibleRoom(roomId, user, now);
   const progress = await RoomProgress.listForRoom(room.id);
@@ -42,8 +40,6 @@ export async function listPuzzles(roomId, user, now = Date.now()) {
   });
 }
 
-// Conteúdo de um enigma. Os jogadores só o recebem com a sala em andamento;
-// o mestre pode ver a qualquer momento. Nunca inclui a resposta.
 export async function getPuzzleForRoom(roomId, key, user, now = Date.now()) {
   const room = await loadAccessibleRoom(roomId, user, now);
 
@@ -56,11 +52,6 @@ export async function getPuzzleForRoom(roomId, key, user, now = Date.now()) {
   return { ...content, status: p.status, solvedBy: p.solvedBy, solvedAt: toIso(p.solvedAtMs) };
 }
 
-// Envia a resposta de um jogador. Regras:
-// - só jogadores da sala, com a sala em andamento e dentro do tempo;
-// - enigma já resolvido fica bloqueado para todos (o primeiro acerto vence);
-// - toda tentativa é registrada;
-// - ao resolver o terceiro enigma, a sala termina como "concluída".
 export async function submitAnswer(roomId, key, user, answer, now = Date.now()) {
   if (user.role !== "player") {
     throw new AppError(403, "Apenas jogadores respondem aos enigmas.");
@@ -72,7 +63,6 @@ export async function submitAnswer(roomId, key, user, answer, now = Date.now()) 
   }
 
   const outcome = await db.transaction(async (trx) => {
-    // A sala fica travada: respostas simultâneas são processadas uma de cada vez.
     const room = await Room.findById(roomId, { trx, forUpdate: true });
     if (!room || !(await RoomPlayer.isMember(room.id, user.id, trx))) throw notFound();
 
@@ -82,7 +72,6 @@ export async function submitAnswer(roomId, key, user, answer, now = Date.now()) 
         finishReason: "timeout",
         finishedAtMs: room.endsAtMs,
       }, trx);
-      // O erro é lançado depois da transação, para o encerramento ser salvo.
       return { rejected: new AppError(409, "O tempo da sala acabou.") };
     }
 
@@ -123,7 +112,6 @@ export async function submitAnswer(roomId, key, user, answer, now = Date.now()) 
     throw outcome.rejected;
   }
 
-  // Avisos em tempo real, só depois que tudo foi salvo.
   publishAttempt(roomId, outcome.attemptId);
   if (outcome.correct) {
     publishRoomChange(roomId, outcome.completed ? "completed" : "puzzle_solved");

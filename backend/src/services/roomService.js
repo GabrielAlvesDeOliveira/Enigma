@@ -27,14 +27,12 @@ function assertAllowed(decision) {
 
 const toIso = (ms) => (ms == null ? null : new Date(ms).toISOString());
 
-// Tempo restante mostrado ao cliente: sala aguardando mostra a duração cheia.
 function remainingFor(room, now) {
   if (room.status === "waiting") return ROOM_DURATION_MS;
   if (room.status === "in_progress") return remainingMs(room.endsAtMs, now);
   return 0;
 }
 
-// Se o tempo acabou, encerra a sala (checagem "preguiçosa": roda sempre que a sala é consultada).
 async function applyTimeout(room, now) {
   if (!shouldTimeout(room, now)) return room;
 
@@ -49,7 +47,6 @@ async function applyTimeout(room, now) {
   return Room.findById(room.id);
 }
 
-// Monta o estado completo da sala que a API devolve.
 async function buildState(room, now) {
   const [players, progress, master] = await Promise.all([
     RoomPlayer.listPlayers(room.id),
@@ -76,14 +73,13 @@ async function buildState(room, now) {
     endsAt: toIso(room.endsAtMs),
     finishedAt: toIso(room.finishedAtMs),
     remainingMs: remainingFor(room, now),
-    serverNow: now, // o cliente usa para acertar a diferença de relógio
+    serverNow: now, 
     master: master ? { id: master.id, name: master.name } : null,
     players,
     puzzles,
   };
 }
 
-// O mestre cria a sala; o código é gerado pelo servidor (com nova tentativa se repetir).
 export async function createRoom(adminId, { generateCode = generateRoomCode } = {}) {
   let roomId = null;
 
@@ -106,7 +102,6 @@ export async function createRoom(adminId, { generateCode = generateRoomCode } = 
   return getRoomState(roomId, { id: adminId, role: "admin" });
 }
 
-// Jogador entra pelo código. Só enquanto a sala aguarda e há vaga.
 export async function joinRoom(user, rawCode, now = Date.now()) {
   if (user.role !== "player") {
     throw new AppError(403, "Apenas jogadores entram em uma sala pelo código.");
@@ -133,9 +128,6 @@ export async function joinRoom(user, rawCode, now = Date.now()) {
   return getRoomState(roomId, user, now);
 }
 
-// Carrega a sala para quem tem acesso: jogadores da sala e qualquer mestre.
-// Quem não pode recebe 404, para não revelar quais salas existem.
-// Também encerra a sala se o tempo já tinha acabado.
 export async function loadAccessibleRoom(roomId, user, now = Date.now()) {
   const room = await Room.findById(roomId);
   if (!room) throw notFound();
@@ -147,13 +139,11 @@ export async function loadAccessibleRoom(roomId, user, now = Date.now()) {
   return applyTimeout(room, now);
 }
 
-// Estado completo da sala que a API devolve.
 export async function getRoomState(roomId, user, now = Date.now()) {
   const room = await loadAccessibleRoom(roomId, user, now);
   return buildState(room, now);
 }
 
-// O mestre que criou a sala inicia o cronômetro.
 export async function startRoom(roomId, adminId, now = Date.now()) {
   await db.transaction(async (trx) => {
     const room = await Room.findById(roomId, { trx, forUpdate: true });
@@ -178,7 +168,6 @@ export async function startRoom(roomId, adminId, now = Date.now()) {
   return getRoomState(roomId, { id: adminId, role: "admin" }, now);
 }
 
-// O mestre cancela a sala. Se o tempo já tinha acabado, vale "tempo esgotado".
 export async function cancelRoom(roomId, adminId, now = Date.now()) {
   const outcome = await db.transaction(async (trx) => {
     const room = await Room.findById(roomId, { trx, forUpdate: true });
@@ -207,7 +196,6 @@ export async function cancelRoom(roomId, adminId, now = Date.now()) {
     return "cancelled";
   });
 
-  // O erro é lançado só depois da transação, para a mudança por tempo esgotado ser salva.
   if (outcome === "timed_out") publishRoomChange(roomId, "timeout");
 
   if (outcome !== "cancelled") {
@@ -219,7 +207,6 @@ export async function cancelRoom(roomId, adminId, now = Date.now()) {
   return getRoomState(roomId, { id: adminId, role: "admin" }, now);
 }
 
-// O jogador sai da sala. Só enquanto ela aguarda (depois do início, o histórico precisa dele).
 export async function leaveRoom(roomId, user) {
   await db.transaction(async (trx) => {
     const room = await Room.findById(roomId, { trx, forUpdate: true });

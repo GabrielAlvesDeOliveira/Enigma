@@ -1,7 +1,3 @@
-// Apoio às tentativas de resposta mostradas no painel do mestre.
-
-// Junta tentativas novas às que já existem, sem repetir (pelo id) e em ordem.
-// Serve tanto para a carga inicial quanto para as que chegam ao vivo.
 export function mergeAttempts(current, incoming) {
   const byId = new Map(current.map((attempt) => [attempt.id, attempt]))
 
@@ -10,7 +6,6 @@ export function mergeAttempts(current, incoming) {
   return [...byId.values()].sort((a, b) => a.id - b.id)
 }
 
-// Quantas tentativas cada enigma teve: { cipher: { total: 3, wrong: 2 }, ... }
 export function countByPuzzle(attempts) {
   const counts = {}
 

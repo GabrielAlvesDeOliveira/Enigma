@@ -6,8 +6,6 @@ import { ApiError, rooms } from '../services/api.js'
 
 const CODE_LENGTH = 6
 
-// Deixa o que a pessoa digitou ou colou no formato do código: sem espaços,
-// em maiúsculas e com no máximo 6 caracteres.
 const cleanCode = (text) => text.replace(/\s+/g, '').toUpperCase().slice(0, CODE_LENGTH)
 
 export default function JoinGame() {

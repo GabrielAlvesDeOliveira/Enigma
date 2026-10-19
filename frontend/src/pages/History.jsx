@@ -6,7 +6,6 @@ import { formatDateTime, formatDuration, roomStatusLabel } from '../utils/format
 
 const PAGE_SIZE = 10
 
-// Histórico do jogador: só as sessões em que ele entrou, da mais nova para a mais antiga.
 export default function History() {
   const [page, setPage] = useState(1)
   const [reloadKey, setReloadKey] = useState(0)
@@ -97,7 +96,6 @@ export default function History() {
                   </div>
                 </dl>
 
-                {/* Salas que ainda não terminaram permitem voltar. */}
                 {room.status !== 'finished' && (
                   <Link className="history-item-link" to={`/sala/${room.id}`}>
                     Abrir sala

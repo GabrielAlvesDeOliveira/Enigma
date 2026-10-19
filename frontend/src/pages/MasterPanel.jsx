@@ -9,8 +9,6 @@ import { formatDateTime, formatDuration, roomStatusLabel } from '../utils/format
 const PAGE_SIZE = 10
 const NO_FILTERS = { guided: false, status: '', reason: '', from: '', to: '' }
 
-// Página inicial do mestre: botão para criar sala e a lista de todas as sessões,
-// com filtros, da mais nova para a mais antiga.
 export default function MasterPanel() {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -53,7 +51,6 @@ export default function MasterPanel() {
     setState((previous) => ({ ...previous, loading: true, error: '' }))
   }
 
-  // Qualquer mudança de filtro volta para a primeira página.
   function changeFilter(name, value) {
     startLoading()
     setPage(1)

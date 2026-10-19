@@ -6,7 +6,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = Router();
 
-// Tudo aqui é exclusivo do mestre.
 router.use(authenticate, requireAdmin);
 
 router.get("/rooms", asyncHandler(historyController.adminList));

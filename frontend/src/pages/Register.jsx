@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import FormError from '../components/FormError.jsx'
 import FormField from '../components/FormField.jsx'
+import Logo from '../components/Logo.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ApiError } from '../services/api.js'
 
@@ -23,7 +24,6 @@ export default function Register() {
     setSubmitting(true)
 
     try {
-      // O cadastro já deixa a pessoa logada; o App.jsx leva para a página certa.
       await register({ name, email, password })
     } catch (err) {
       setError(
@@ -36,6 +36,11 @@ export default function Register() {
 
   return (
     <main className="auth-page">
+      <div className="auth-brand">
+        <Logo />
+        <p className="auth-brand-name">Sala de Enigmas</p>
+      </div>
+
       <section className="auth-card">
         <h1 className="auth-title">Cadastrar</h1>
 

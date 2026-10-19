@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import Countdown from '../components/Countdown.jsx'
 import FormError from '../components/FormError.jsx'
+import Logo from '../components/Logo.jsx'
 import PuzzleModal from '../components/PuzzleModal.jsx'
 import PuzzleSquare from '../components/PuzzleSquare.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -9,15 +10,12 @@ import usePuzzleTitles from '../hooks/usePuzzleTitles.js'
 import useRoom from '../hooks/useRoom.js'
 import { ApiError, rooms } from '../services/api.js'
 
-// Mensagem de cada resultado possível quando a sala termina.
 const RESULT_MESSAGES = {
   completed: 'Parabéns! Vocês resolveram os 3 enigmas.',
   timeout: 'O tempo acabou.',
   cancelled: 'O mestre cancelou a sala.',
 }
 
-// A "key" faz o estado recomeçar do zero se a pessoa passar de uma sala para outra
-// (e também quando ela pede para tentar de novo).
 export default function Room() {
   const { roomId } = useParams()
   const [attempt, setAttempt] = useState(0)
@@ -57,6 +55,7 @@ function RoomView({ roomId, onRetry }) {
   if (loading) {
     return (
       <main className="room-page">
+        <Logo />
         <p className="room-status">Carregando sala...</p>
 
         {/* Se a conexão estiver demorando ou falhando, explica e dá uma saída. */}
@@ -81,6 +80,7 @@ function RoomView({ roomId, onRetry }) {
   if (error) {
     return (
       <main className="room-page">
+        <Logo />
         <FormError message={error} />
         <Link className="room-back" to="/jogo">
           Voltar
@@ -99,6 +99,7 @@ function RoomView({ roomId, onRetry }) {
   return (
     <main className="room-page">
       <header className="room-header">
+        <Logo />
         <h1 className="room-title">Sala {room.code}</h1>
         {offline && (
           <p className="room-connection" role="status">
@@ -112,12 +113,11 @@ function RoomView({ roomId, onRetry }) {
       {inProgress && <Countdown endsAt={room.endsAt} offset={serverOffset} />}
 
       {finished && (
-        <p className="room-result" role="status">
+        <p className="room-result" role="status" data-reason={room.finishReason}>
           {RESULT_MESSAGES[room.finishReason] ?? 'A sala foi encerrada.'}
         </p>
       )}
 
-      {/* Os quadrados só aparecem com a sala em andamento ou encerrada (aí, só para leitura). */}
       {!waiting && (
         <div className="puzzle-grid">
           {room.puzzles.map((puzzle) => (

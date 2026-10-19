@@ -1,4 +1,3 @@
-// Erro de valor repetido em coluna única (código do PostgreSQL ou do SQLite).
 export function isUniqueViolation(err) {
   return (
     err?.code === "23505" ||

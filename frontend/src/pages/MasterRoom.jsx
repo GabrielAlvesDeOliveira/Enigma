@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Countdown from '../components/Countdown.jsx'
 import FormError from '../components/FormError.jsx'
+import Logo from '../components/Logo.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import usePuzzleTitles from '../hooks/usePuzzleTitles.js'
 import useRoom from '../hooks/useRoom.js'
@@ -11,15 +12,12 @@ import { formatAnswer, formatClock, roomStatusLabel } from '../utils/format.js'
 
 const MAX_PLAYERS = 3
 
-// Mensagem de cada resultado possível quando a sala termina.
 const RESULT_MESSAGES = {
   completed: 'Os jogadores resolveram os 3 enigmas.',
   timeout: 'O tempo acabou.',
   cancelled: 'A sala foi cancelada.',
 }
 
-// A "key" faz o estado recomeçar do zero se o mestre passar de uma sala para outra
-// (e também quando ele pede para tentar de novo).
 export default function MasterRoom() {
   const { roomId } = useParams()
   const [attempt, setAttempt] = useState(0)
@@ -37,7 +35,6 @@ function MasterRoomView({ roomId, onRetry }) {
   const { user } = useAuth()
   const titles = usePuzzleTitles(roomId)
 
-  // Tentativas de resposta: a lista completa vem da API ao abrir e as novas chegam ao vivo.
   const [attempts, setAttempts] = useState([])
   const addAttempt = useCallback((attempt) => setAttempts((current) => mergeAttempts(current, [attempt])), [])
 
@@ -49,7 +46,6 @@ function MasterRoomView({ roomId, onRetry }) {
   const [actionError, setActionError] = useState('')
   const [confirmingCancel, setConfirmingCancel] = useState(false)
 
-  // Carga inicial das tentativas.
   useEffect(() => {
     let active = true
 
@@ -59,7 +55,6 @@ function MasterRoomView({ roomId, onRetry }) {
         if (active) setAttempts((current) => mergeAttempts(current, result.attempts))
       })
       .catch(() => {
-        // se falhar, as tentativas novas ainda chegam ao vivo
       })
 
     return () => {
@@ -67,8 +62,6 @@ function MasterRoomView({ roomId, onRetry }) {
     }
   }, [roomId])
 
-  // Se a conexão cair e voltar, busca de novo as tentativas: as que foram enviadas
-  // durante a queda não chegam pelo tempo real.
   const wasOffline = useRef(false)
   useEffect(() => {
     if (offline) {
@@ -98,7 +91,7 @@ function MasterRoomView({ roomId, onRetry }) {
 
     try {
       const result = await action()
-      applyRoom(result.room) // não espera o aviso do tempo real para atualizar a tela
+      applyRoom(result.room) 
     } catch (err) {
       setActionError(err instanceof ApiError ? err.message : 'Não foi possível concluir a ação.')
     } finally {
@@ -110,6 +103,7 @@ function MasterRoomView({ roomId, onRetry }) {
   if (loading) {
     return (
       <main className="master-room-page">
+        <Logo />
         <p className="room-status">Carregando sala...</p>
 
         {offline && (
@@ -133,6 +127,7 @@ function MasterRoomView({ roomId, onRetry }) {
   if (error) {
     return (
       <main className="master-room-page">
+        <Logo />
         <FormError message={error} />
         <Link className="room-back" to="/mestre">
           Voltar ao painel
@@ -154,9 +149,12 @@ function MasterRoomView({ roomId, onRetry }) {
         <Link className="room-back" to="/mestre">
           Voltar ao painel
         </Link>
-        <h1 className="master-room-title">
-          Sala <span className="room-code">{room.code}</span>
-        </h1>
+        <div className="master-room-heading">
+          <Logo />
+          <h1 className="master-room-title">
+            Sala <span className="room-code">{room.code}</span>
+          </h1>
+        </div>
         <p className="master-room-status">{roomStatusLabel(room)}</p>
         {offline && (
           <p className="room-connection" role="status">
@@ -174,7 +172,7 @@ function MasterRoomView({ roomId, onRetry }) {
       {inProgress && <Countdown endsAt={room.endsAt} offset={serverOffset} />}
 
       {finished && (
-        <p className="room-result" role="status">
+        <p className="room-result" role="status" data-reason={room.finishReason}>
           {RESULT_MESSAGES[room.finishReason] ?? 'A sala foi encerrada.'}
         </p>
       )}

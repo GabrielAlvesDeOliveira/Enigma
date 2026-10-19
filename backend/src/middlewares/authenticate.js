@@ -1,8 +1,6 @@
 import { verifyToken } from "../services/authService.js";
 import { AppError } from "../utils/AppError.js";
 
-// Exige login. Lê o cabeçalho "Authorization: Bearer <token>"
-// e deixa os dados do usuário em req.user.
 export function authenticate(req, res, next) {
   const header = req.headers.authorization || "";
   const [scheme, token] = header.split(" ");

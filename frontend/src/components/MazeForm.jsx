@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { areAdjacent, parseLayout, stepFrom } from '../utils/maze.js'
 
-// Teclas de seta -> direção [linha, coluna].
 const KEY_DIRECTIONS = {
   ArrowUp: [-1, 0],
   ArrowDown: [1, 0],
@@ -12,11 +11,6 @@ const KEY_DIRECTIONS = {
 const KIND_LABELS = { start: 'início', end: 'fim', floor: '', wall: '' }
 const KIND_SYMBOLS = { start: 'I', end: 'F', floor: '', wall: '' }
 
-// Enigma do labirinto em grade. A pessoa anda do início (I) até o fim (F), casa por casa:
-// - clicando nas casas vizinhas à última do caminho, ou
-// - com as setas do teclado (com a grade selecionada); Backspace volta uma casa.
-// Clicar em uma casa que já está no caminho volta até ela. O caminho só pode ser
-// enviado quando chega ao fim. Quem confere o caminho é o servidor.
 export default function MazeForm({ puzzle, submitting, onSubmit }) {
   const rows = useMemo(() => parseLayout(puzzle.layout), [puzzle.layout])
   const openIds = useMemo(
@@ -29,7 +23,6 @@ export default function MazeForm({ puzzle, submitting, onSubmit }) {
   const last = path[path.length - 1]
   const reachedEnd = last === puzzle.end
 
-  // Pode andar até essa casa? (livre, vizinha da última, ainda fora do caminho)
   const canStepTo = (id) =>
     !submitting && !reachedEnd && openIds.has(id) && !path.includes(id) && areAdjacent(last, id)
 
@@ -39,7 +32,7 @@ export default function MazeForm({ puzzle, submitting, onSubmit }) {
   function handleCellClick(id) {
     const index = path.indexOf(id)
 
-    if (index !== -1) setPath(path.slice(0, index + 1)) // volta até essa casa
+    if (index !== -1) setPath(path.slice(0, index + 1)) 
     else if (canStepTo(id)) setPath([...path, id])
   }
 
@@ -59,7 +52,6 @@ export default function MazeForm({ puzzle, submitting, onSubmit }) {
     const target = stepFrom(last, direction, puzzle.rows, puzzle.cols)
     if (!target) return
 
-    // Andar para a casa de onde se veio é o mesmo que voltar uma casa.
     if (path.length > 1 && target === path[path.length - 2]) undo()
     else if (canStepTo(target)) setPath([...path, target])
   }

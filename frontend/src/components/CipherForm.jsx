@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import FormField from './FormField.jsx'
 
-// Enigma da cifra: mostra a mensagem cifrada e recebe a mensagem decifrada (texto).
 export default function CipherForm({ puzzle, submitting, onSubmit }) {
   const [text, setText] = useState('')
 

@@ -1,13 +1,8 @@
-// Cliente da API. Todas as chamadas ao backend passam por aqui.
-// O contrato (rotas, corpos e respostas) está em docs/API.md.
-
 const BASE_URL = (import.meta.env?.VITE_API_URL || 'http://localhost:3000').replace(/\/+$/, '')
 const TOKEN_KEY = 'enigma.token'
 
 export const API_BASE_URL = BASE_URL
 
-// Erro devolvido pela API (ou falha de conexão, com status 0).
-// "message" já vem em português, pronta para mostrar na tela.
 export class ApiError extends Error {
   constructor(status, message) {
     super(message)
@@ -15,10 +10,6 @@ export class ApiError extends Error {
     this.status = status
   }
 }
-
-// ---------- Token de login ----------
-// Fica no localStorage para a pessoa continuar logada ao recarregar a página.
-// Se o navegador bloquear o armazenamento, o token vale só até fechar a aba.
 
 let memoryToken = null
 
@@ -35,37 +26,26 @@ export function setToken(token) {
   memoryToken = token
   try {
     localStorage.setItem(TOKEN_KEY, token)
-  } catch {
-    // sem armazenamento: segue só com o token em memória
-  }
+  } catch {}
 }
 
 export function clearToken() {
   memoryToken = null
   try {
     localStorage.removeItem(TOKEN_KEY)
-  } catch {
-    // nada a fazer
-  }
+  } catch {}
 }
 
-// Função chamada quando a API recusa um token que estava sendo usado (expirado ou inválido).
-// O AuthContext registra aqui a sua saída automática.
 let unauthorizedHandler = null
 
 export function setUnauthorizedHandler(handler) {
   unauthorizedHandler = handler
 }
 
-// Avisa que a sessão não vale mais, para quem descobriu isso por outro caminho
-// que não uma requisição HTTP (por exemplo, o tempo real recusou o token).
 export function notifyUnauthorized() {
   if (unauthorizedHandler) unauthorizedHandler()
 }
 
-// ---------- Requisições ----------
-
-// Monta "?page=1&status=finished", ignorando valores vazios.
 export function buildQuery(params) {
   const search = new URLSearchParams()
   for (const [key, value] of Object.entries(params ?? {})) {
@@ -77,8 +57,6 @@ export function buildQuery(params) {
 
 const segment = (value) => encodeURIComponent(String(value))
 
-// auth: false nas chamadas de login e cadastro. Elas não enviam o token e um 401
-// ali significa "senha errada", não "sessão vencida".
 async function request(method, path, { body, query, auth = true } = {}) {
   const token = auth ? getToken() : null
 
@@ -100,9 +78,7 @@ async function request(method, path, { body, query, auth = true } = {}) {
   let data = null
   try {
     data = await response.json()
-  } catch {
-    // resposta sem JSON (por exemplo, erro de um servidor intermediário)
-  }
+  } catch {}
 
   if (!response.ok) {
     if (response.status === 401 && token && unauthorizedHandler) unauthorizedHandler()
@@ -111,8 +87,6 @@ async function request(method, path, { body, query, auth = true } = {}) {
 
   return data
 }
-
-// ---------- Rotas da API ----------
 
 export const auth = {
   register: ({ name, email, password }) =>

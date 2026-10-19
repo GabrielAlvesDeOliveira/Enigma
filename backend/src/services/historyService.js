@@ -8,7 +8,6 @@ import { AppError } from "../utils/AppError.js";
 
 const toIso = (ms) => (ms == null ? null : new Date(ms).toISOString());
 
-// Formato de uma tentativa na API e nos eventos em tempo real.
 export function toAttemptView(a) {
   return {
     id: a.id,
@@ -20,7 +19,6 @@ export function toAttemptView(a) {
   };
 }
 
-// Uma página de salas com o resumo de cada uma (sem uma consulta por sala).
 async function listPage(filters) {
   const { page, pageSize } = filters;
   const { total, rooms } = await Room.search(filters, {
@@ -63,7 +61,6 @@ async function listPage(filters) {
   return { rooms: items, page, pageSize, total };
 }
 
-// Histórico do jogador: só as sessões em que ele entrou.
 export async function listPlayerHistory(user, filters, now = Date.now()) {
   if (user.role !== "player") {
     throw new AppError(403, "Mestres veem as sessões em /api/admin/rooms.");
@@ -73,13 +70,11 @@ export async function listPlayerHistory(user, filters, now = Date.now()) {
   return listPage({ ...filters, memberId: user.id, createdBy: null });
 }
 
-// Histórico do mestre: todas as sessões. Com guided=true, só as que ele guiou.
 export async function listAdminHistory(user, filters, now = Date.now()) {
   await Room.expireOverdue(now);
   return listPage({ ...filters, memberId: null, createdBy: filters.guided ? user.id : null });
 }
 
-// Painel do mestre: estado da sala, resumo de cada enigma e todas as tentativas.
 export async function getAdminRoomDetail(roomId, user, now = Date.now()) {
   const room = await getRoomState(roomId, user, now);
   const attempts = await PuzzleAttempt.listForRoom(room.id);

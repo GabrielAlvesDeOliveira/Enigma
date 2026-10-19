@@ -1,6 +1,3 @@
-// Funções de apresentação usadas pelas páginas (datas, tempo e situação da sala).
-
-// "2026-10-15T22:09:00.000Z" -> "15/10/2026 19:09" (no fuso do navegador)
 export function formatDateTime(iso) {
   if (!iso) return '-'
   const date = new Date(iso)
@@ -8,7 +5,6 @@ export function formatDateTime(iso) {
   return date.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
 }
 
-// 125000 -> "02:05". Sem valor, devolve "-".
 export function formatDuration(ms) {
   if (ms === null || ms === undefined) return '-'
   const totalSeconds = Math.max(0, Math.round(ms / 1000))
@@ -17,7 +13,6 @@ export function formatDuration(ms) {
   return `${minutes}:${seconds}`
 }
 
-// Texto da situação de uma sala (serve para o estado da sala e para o histórico).
 export function roomStatusLabel({ status, finishReason }) {
   if (status === 'waiting') return 'Aguardando o mestre iniciar'
   if (status === 'in_progress') return 'Em andamento'
@@ -27,7 +22,6 @@ export function roomStatusLabel({ status, finishReason }) {
   return 'Encerrada'
 }
 
-// "2026-10-15T22:09:41.000Z" -> "19:09:41" (no fuso do navegador)
 export function formatClock(iso) {
   if (!iso) return '-'
   const date = new Date(iso)
@@ -35,11 +29,9 @@ export function formatClock(iso) {
   return date.toLocaleTimeString('pt-BR')
 }
 
-// A resposta enviada pode ser texto, número ou a lista de salas do labirinto.
 export function formatAnswer(answer) {
   if (!Array.isArray(answer)) return String(answer)
   if (answer.length <= 6) return answer.join(' > ')
 
-  // Caminho longo (labirinto em grade): mostra o começo, o fim e o total de casas.
   return `${answer.slice(0, 3).join(' > ')} > ... > ${answer.slice(-2).join(' > ')} (${answer.length} casas)`
 }

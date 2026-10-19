@@ -1,6 +1,5 @@
 const CODE_A = "A".charCodeAt(0);
 
-// Remove acentos, deixa em maiúsculas e ajusta os espaços.
 export function normalizeText(text) {
   return String(text)
     .normalize("NFD")
@@ -10,8 +9,6 @@ export function normalizeText(text) {
     .trim();
 }
 
-// Desloca cada letra de A a Z em "shift" posições (Cifra de César).
-// Caracteres que não são letras ficam como estão.
 export function caesarShift(text, shift) {
   const k = ((shift % 26) + 26) % 26;
   let result = "";

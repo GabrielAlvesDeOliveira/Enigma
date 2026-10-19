@@ -13,7 +13,7 @@ export async function count(roomId, trx) {
   const [row] = await conn(trx)("room_players")
     .where({ room_id: roomId })
     .count({ total: "*" });
-  return Number(row.total); // o PostgreSQL devolve texto
+  return Number(row.total); 
 }
 
 export async function add(roomId, userId, trx) {
@@ -32,7 +32,6 @@ export async function listPlayers(roomId, trx) {
     .select("u.id", "u.name");
 }
 
-// Jogadores de várias salas de uma vez (evita uma consulta por sala).
 export async function listForRooms(roomIds, trx) {
   if (roomIds.length === 0) return [];
 

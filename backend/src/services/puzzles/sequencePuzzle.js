@@ -1,6 +1,5 @@
 import { nextTermByDifferences } from "../algorithms/sequence.js";
 
-// CONTEÚDO DE EXEMPLO: a equipe pode trocar a sequência.
 const TERMS = [3, 8, 15, 24, 35];
 
 export default {
@@ -15,7 +14,6 @@ export default {
     };
   },
 
-  // O próximo termo é calculado pelo algoritmo, não escrito na mão.
   validate(answer) {
     if (typeof answer !== "number" && typeof answer !== "string") return false;
 

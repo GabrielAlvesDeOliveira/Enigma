@@ -1,5 +1,3 @@
-// Monta uma lista de adjacência (grafo não direcionado) a partir das arestas.
-// Exemplo: [["A", "B"], ["B", "C"]] vira { A: ["B"], B: ["A", "C"], C: ["B"] }
 export function buildGraph(edges) {
   const graph = Object.create(null);
 
@@ -11,8 +9,6 @@ export function buildGraph(edges) {
   return graph;
 }
 
-// Busca em largura (BFS): devolve o menor caminho de start até end,
-// ou null se não existir caminho.
 export function bfsShortestPath(graph, start, end) {
   if (!(start in graph) || !(end in graph)) return null;
 
@@ -42,8 +38,6 @@ export function bfsShortestPath(graph, start, end) {
   return null;
 }
 
-// Confere se o caminho enviado pelo jogador é válido: começa na entrada,
-// termina na saída, não repete salas e só usa conexões que existem.
 export function isValidPath(graph, path, start, end) {
   if (!Array.isArray(path) || path.length < 2) return false;
   if (!path.every((node) => typeof node === "string")) return false;

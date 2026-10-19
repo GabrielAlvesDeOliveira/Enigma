@@ -3,7 +3,6 @@ import { toMillis } from "../utils/time.js";
 
 const conn = (trx) => trx || db;
 
-// Cria uma linha "aberta" para cada enigma da sala.
 export async function createForRoom(roomId, puzzleKeys, trx) {
   const rows = puzzleKeys.map((key) => ({ room_id: roomId, puzzle_key: key }));
   await conn(trx)("room_puzzle_progress").insert(rows);
@@ -20,15 +19,12 @@ export async function listForRoom(roomId, trx) {
   }));
 }
 
-// Marca o enigma como resolvido, mas só se ainda estiver aberto.
-// Devolve quantas linhas mudaram: 0 significa que alguém resolveu antes.
 export async function markSolved(roomId, puzzleKey, userId, nowMs, trx) {
   return conn(trx)("room_puzzle_progress")
     .where({ room_id: roomId, puzzle_key: puzzleKey, status: "open" })
     .update({ status: "solved", solved_by: userId, solved_at: new Date(nowMs) });
 }
 
-// Quantos enigmas ainda estão abertos na sala.
 export async function countOpen(roomId, trx) {
   const [row] = await conn(trx)("room_puzzle_progress")
     .where({ room_id: roomId, status: "open" })
@@ -36,7 +32,6 @@ export async function countOpen(roomId, trx) {
   return Number(row.total);
 }
 
-// Progresso de várias salas de uma vez.
 export async function listForRooms(roomIds, trx) {
   if (roomIds.length === 0) return [];
 

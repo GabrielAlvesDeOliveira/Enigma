@@ -1,13 +1,3 @@
-// Utilitário de DESENVOLVIMENTO: usa o mestre do seed para criar, iniciar ou
-// cancelar salas pela API, enquanto o painel do mestre ainda não existe no frontend.
-//
-// Uso (dentro de backend/, com o servidor rodando):
-//   node scripts/dev-room.js            cria uma sala e mostra o código
-//   node scripts/dev-room.js start 5    inicia a sala 5
-//   node scripts/dev-room.js cancel 5   cancela a sala 5
-//
-// Lê ADMIN_EMAIL e ADMIN_PASSWORD do .env (os mesmos usados pelo seed).
-// Se a API não estiver em http://localhost:3000, defina API_URL no .env.
 import "dotenv/config";
 
 const BASE_URL = (process.env.API_URL || `http://localhost:${process.env.PORT || 3000}`).replace(/\/+$/, "");

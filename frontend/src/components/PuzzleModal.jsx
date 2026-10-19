@@ -4,17 +4,10 @@ import CipherForm from './CipherForm.jsx'
 import MazeForm from './MazeForm.jsx'
 import SequenceForm from './SequenceForm.jsx'
 
-// Cada tipo de enigma tem o seu formulário.
 const FORMS = { cipher: CipherForm, sequence: SequenceForm, maze: MazeForm }
 
-// Depois de acertar, o modal fecha sozinho depois deste tempo.
 const CLOSE_DELAY_MS = 1500
 
-// Modal de um enigma (usa o <dialog> nativo: fundo escurecido, ESC fecha e o foco
-// fica preso dentro). É montado só quando está aberto.
-//
-// "puzzleState" é o estado AO VIVO do enigma na sala ({ status, solvedBy }), então se
-// outra pessoa resolver com o modal aberto, ele avisa e trava o formulário na hora.
 export default function PuzzleModal({
   roomId,
   puzzleKey,
@@ -36,8 +29,6 @@ export default function PuzzleModal({
   const solved = puzzleState.status === 'solved'
   const solvedByMe = solved && puzzleState.solvedBy === currentUserId
 
-  // Abre como modal de verdade (com um plano B para navegadores muito antigos).
-  // O "open" evita abrir duas vezes (o modo de desenvolvimento do React roda efeitos em dobro).
   useEffect(() => {
     const dialog = dialogRef.current
     if (dialog.open) return
@@ -45,7 +36,6 @@ export default function PuzzleModal({
     else dialog.setAttribute('open', '')
   }, [])
 
-  // Busca o conteúdo do enigma ao abrir.
   useEffect(() => {
     let active = true
 
@@ -64,8 +54,6 @@ export default function PuzzleModal({
     }
   }, [roomId, puzzleKey])
 
-  // Quando a própria pessoa acerta, fecha sozinho depois de mostrar "Resolvido!".
-  // O onClose mais recente fica em um ref para o tempo não reiniciar a cada atualização.
   const latestOnClose = useRef(onClose)
   useEffect(() => {
     latestOnClose.current = onClose
@@ -82,7 +70,7 @@ export default function PuzzleModal({
 
     try {
       const result = await puzzles.answer(roomId, puzzleKey, answer)
-      onRoomUpdate(result.room) // não espera o aviso do tempo real para atualizar a tela
+      onRoomUpdate(result.room) 
       if (!result.correct) setFeedback('Resposta incorreta. Tente de novo.')
     } catch (err) {
       setFeedback(err instanceof ApiError ? err.message : 'Não foi possível enviar a resposta.')

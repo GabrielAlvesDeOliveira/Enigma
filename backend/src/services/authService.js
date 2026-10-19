@@ -7,8 +7,6 @@ const ROUNDS = Number(process.env.BCRYPT_ROUNDS) || 10;
 const TOKEN_EXPIRES_IN = "8h";
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Usado para gastar o mesmo tempo quando o e-mail não existe,
-// evitando que a resposta revele quais e-mails estão cadastrados.
 const DUMMY_HASH = bcrypt.hashSync("senha-de-mentira", ROUNDS);
 
 function getJwtSecret() {
@@ -38,7 +36,6 @@ function validateRegisterInput({ name, email, password }) {
     throw new AppError(400, "E-mail inválido.");
   }
 
-  // O bcrypt só considera os primeiros 72 bytes da senha.
   if (password.length < 8 || Buffer.byteLength(password) > 72) {
     throw new AppError(400, "A senha deve ter entre 8 e 72 caracteres.");
   }
@@ -62,7 +59,6 @@ export function verifyToken(token) {
   }
 }
 
-// Quem se cadastra pela API sempre vira jogador. O mestre vem do seed.
 export async function register(input) {
   const { name, email, password } = validateRegisterInput(input ?? {});
 
@@ -76,7 +72,6 @@ export async function register(input) {
   try {
     row = await User.create({ name, email, passwordHash, role: "player" });
   } catch (err) {
-    // Dois cadastros simultâneos com o mesmo e-mail: o banco barra o segundo.
     if (err.code === "23505" || err.code === "SQLITE_CONSTRAINT_UNIQUE") {
       throw new AppError(409, "Este e-mail já está cadastrado.");
     }

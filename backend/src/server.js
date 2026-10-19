@@ -6,7 +6,6 @@ import { startSweeper } from "./services/roomSweeper.js";
 
 const PORT = process.env.PORT || 3000;
 
-// O Socket.IO precisa do servidor HTTP "puro" por baixo do Express.
 const server = http.createServer(app);
 attachSockets(server);
 startSweeper();

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import FormError from '../components/FormError.jsx'
 import FormField from '../components/FormField.jsx'
+import Logo from '../components/Logo.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import { ApiError } from '../services/api.js'
 
@@ -22,7 +23,6 @@ export default function Login() {
     setSubmitting(true)
 
     try {
-      // Depois de entrar, o App.jsx leva a pessoa para a página certa sozinho.
       await login({ email, password })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Não foi possível entrar. Tente novamente.')
@@ -33,6 +33,11 @@ export default function Login() {
 
   return (
     <main className="auth-page">
+      <div className="auth-brand">
+        <Logo />
+        <p className="auth-brand-name">Sala de Enigmas</p>
+      </div>
+
       <section className="auth-card">
         <h1 className="auth-title">Entrar</h1>
 
@@ -63,7 +68,6 @@ export default function Login() {
           </button>
         </form>
 
-        {/* O state leva junto a página que a pessoa tentou abrir, para ela voltar a ela depois do cadastro. */}
         <p className="auth-switch">
           Ainda não tem conta?{' '}
           <Link className="auth-link" to="/cadastro" state={location.state}>

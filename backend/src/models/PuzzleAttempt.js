@@ -4,9 +4,6 @@ import { toMillis } from "../utils/time.js";
 
 const conn = (trx) => trx || db;
 
-// A resposta é guardada dentro de um envelope { value }. Sem ele, um texto simples
-// seria devolvido de formas diferentes pelo SQLite e pelo PostgreSQL.
-// Devolve o id da tentativa criada.
 export async function create({ roomId, puzzleKey, userId, answer, isCorrect }, trx) {
   const [row] = await conn(trx)("puzzle_attempts")
     .insert({
@@ -53,7 +50,6 @@ export async function findById(id, trx) {
   return row ? toAttempt(row) : null;
 }
 
-// Todas as tentativas da sala, da mais antiga para a mais recente.
 export async function listForRoom(roomId, trx) {
   const rows = await conn(trx)("puzzle_attempts as pa")
     .join("users as u", "u.id", "pa.user_id")

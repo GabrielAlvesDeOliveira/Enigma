@@ -3,7 +3,6 @@ import { toMillis } from "../utils/time.js";
 
 const conn = (trx) => trx || db;
 
-// Converte a linha do banco para o formato usado pelo código (datas em ms).
 function toRoom(row) {
   if (!row) return null;
   return {
@@ -19,8 +18,6 @@ function toRoom(row) {
   };
 }
 
-// Com forUpdate, a linha fica travada até o fim da transação
-// (evita duas pessoas mexendo na mesma sala ao mesmo tempo no PostgreSQL).
 export async function findById(id, { trx, forUpdate = false } = {}) {
   let query = conn(trx)("rooms").where({ id });
   if (forUpdate && trx) query = query.forUpdate();
@@ -42,8 +39,6 @@ export async function create({ code, createdBy }, trx) {
   return findById(id, { trx });
 }
 
-// Muda o estado da sala só se ela ainda estiver em um dos estados esperados.
-// Devolve quantas linhas mudaram (0 significa que alguém chegou antes).
 export async function transition(id, fromStatuses, fields, trx) {
   const changes = { updated_at: db.fn.now() };
 
@@ -56,12 +51,8 @@ export async function transition(id, fromStatuses, fields, trx) {
   return conn(trx)("rooms").where({ id }).whereIn("status", fromStatuses).update(changes);
 }
 
-// ---------- Histórico e listagens ----------
-
 const isSqlite = () => String(db.client.config.client).includes("sqlite");
 
-// created_at é preenchido pelo próprio banco. O SQLite guarda texto UTC
-// ("2026-10-14 00:30:09"), então a comparação precisa usar o mesmo formato.
 function createdAtParam(ms) {
   if (!isSqlite()) return new Date(ms);
   return new Date(ms).toISOString().slice(0, 19).replace("T", " ");
@@ -79,8 +70,6 @@ function applyFilters(query, { memberId, createdBy, status, finishReason, fromMs
   return query;
 }
 
-// Busca salas com filtros, da mais nova para a mais antiga.
-// Devolve também o total (para a paginação) e o nome do mestre.
 export async function search(filters, { limit, offset }) {
   const [{ total }] = await applyFilters(db("rooms as r"), filters).count({ total: "*" });
 
@@ -97,8 +86,6 @@ export async function search(filters, { limit, offset }) {
   };
 }
 
-// Encerra de uma vez todas as salas em andamento cujo tempo já acabou.
-// Usado antes das listagens, para elas não mostrarem salas "fantasmas".
 export async function expireOverdue(nowMs) {
   return db("rooms")
     .where({ status: "in_progress" })
@@ -111,7 +98,6 @@ export async function expireOverdue(nowMs) {
     });
 }
 
-// Salas em andamento cujo tempo já acabou (usado pelo encerramento automático).
 export async function findOverdue(nowMs) {
   const rows = await db("rooms")
     .where({ status: "in_progress" })
