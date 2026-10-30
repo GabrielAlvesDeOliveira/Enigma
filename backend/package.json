@@ -4,6 +4,8 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
+    "start": "node src/server.js",
+    "start:render": "knex migrate:latest && knex seed:run && node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "node --test",
     "migrate": "knex migrate:latest",

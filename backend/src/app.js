@@ -11,7 +11,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/teste", (req, res) => res.json({ status: "ok" }));
+// Verificação de saúde: a hospedagem (Render) usa esta rota para saber se o servidor está no ar.
+app.get("/health", (req, res) => res.json({ status: "ok" }));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/rooms/:id/puzzles", puzzleRoutes);

@@ -1,0 +1,52 @@
+# Blueprint da Render: cria o servidor (API + tempo real) e o site a partir deste repositório.
+# Passo a passo: docs/DEPLOY.md
+#
+# O banco de dados NÃO fica na Render (o PostgreSQL gratuito dela expira em 30 dias):
+# ele fica na Neon, e a conexão entra pela variável DATABASE_URL.
+services:
+  # ---------- Servidor: API REST + Socket.IO ----------
+  - type: web
+    name: sala-enigma-api
+    runtime: node
+    plan: free
+    region: virginia
+    rootDir: backend
+    buildCommand: npm install
+    # Roda as migrations e o seed (seguro repetir) e sobe o servidor.
+    # O plano gratuito não tem terminal, por isso isso acontece na partida.
+    startCommand: npm run start:render
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: PORT
+        value: "10000"
+      - key: DATABASE_URL # endereço de conexão da Neon (a Render pede na criação)
+        sync: false
+      - key: JWT_SECRET # a Render gera um valor aleatório
+        generateValue: true
+      - key: ADMIN_NAME
+        value: Mestre
+      - key: ADMIN_EMAIL # e-mail do primeiro mestre (a Render pede na criação)
+        sync: false
+      - key: ADMIN_PASSWORD # senha do primeiro mestre (a Render pede na criação)
+        sync: false
+
+  # ---------- Site: React + Vite (arquivos estáticos) ----------
+  - type: web
+    name: sala-enigma-site
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: ./frontend/dist
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      # Endereço do servidor acima. Se a Render der outro endereço ao servidor
+      # (nome já usado por outra pessoa), corrija aqui e refaça o deploy do site.
+      - key: VITE_API_URL
+        value: https://sala-enigma-api.onrender.com
+    routes:
+      # O React Router cuida das rotas (/jogo, /sala/...): toda rota abre o index.html.
+      - type: rewrite
+        source: /*
+        destination: /index.html
