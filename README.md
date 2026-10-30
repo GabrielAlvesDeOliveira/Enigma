@@ -166,4 +166,4 @@ O conteúdo dos enigmas fica no código (`services/`). O banco guarda apenas o p
 - [x] Histórico e painel do mestre (Socket.IO)
 - [x] Contrato da API em `docs/API.md`
 - [x] Frontend em React
-- [ ] Deploy em hospedagem gratuita
+- [x] Deploy em hospedagem gratuita
